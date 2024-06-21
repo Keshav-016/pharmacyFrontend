@@ -11,10 +11,8 @@ function UndeliveredOrder() {
     const unDeliveredOrders = useMemo(
         () =>
             orders?.data?.length &&
-            orders?.data?.filter(
-                (item) => item.orderId.status === 'accepted',
-                [orders]
-            )
+            orders?.data?.filter((item) => item.status === 'confirmed'),
+        [orders]
     );
 
     return orders?.isLoading ? (
@@ -22,12 +20,12 @@ function UndeliveredOrder() {
     ) : orders?.error ? (
         <ErrorPage />
     ) : !unDeliveredOrders?.length ? (
-        <NothingToShow />
+        <div className=' h-[68vh]'><NothingToShow /></div>
     ) : (
         <div
-            className={`flex max-w-[1200px]  mx-auto flex-col gap-3 px-2 ${orders?.data?.length === 0 && 'mt-[20vh]'}`}
+            className={`flex max-w-[1200px] no-scrollbar h-[68vh] overflow-y-scroll  mx-auto flex-col gap-[0.3rem] px-2 ${orders?.data?.length === 0 && 'mt-[20vh]'}`}
         >
-            {unDeliveredOrders?.map((item) => {
+            {unDeliveredOrders.map((item) => {
                 return <PharmacistOrderCards key={item._id} order={item} />;
             })}
         </div>

@@ -4,7 +4,6 @@ import { RxCross2 } from 'react-icons/rx';
 import SwitchButton from './SwitchButton';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPharmaModalDetails } from '../../../../features/getPharmaModalSlice';
-import axios from 'axios';
 
 const PharmaciesModal = ({ onClose }) => {
     const dispatch = useDispatch();
@@ -14,7 +13,6 @@ const PharmaciesModal = ({ onClose }) => {
     let pharmaciesModalData = useSelector(
         (state) => state.pharmaciesModal.data
     );
-    console.log('data', pharmaciesModalData);
 
     const modalRef = useRef();
     const closeModal = (e) => {
@@ -28,7 +26,7 @@ const PharmaciesModal = ({ onClose }) => {
             <div
                 ref={modalRef}
                 onClick={closeModal}
-                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex  "
+                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex "
             >
                 <div className=" bg-white rounded-2xl m-auto p-7 flex-col gap-5 items-center w-[90%] sm:w-[70%]  ">
                     <div className="flex justify-between">

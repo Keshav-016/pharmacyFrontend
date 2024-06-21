@@ -7,6 +7,7 @@ const AddToCartBtn = ({
     handleDecreaseItem
 }) => {
     const userCart = useSelector((state) => state.userCart);
+
     const findIndex = userCart.findIndex(
         (ele) => ele?.medicineData?.medicineId?.medicineId?._id === id
     );
@@ -18,7 +19,7 @@ const AddToCartBtn = ({
                     <div className=" flex justify-center">
                         <button
                             onClick={handleNewCartItem}
-                            className=" text-[#1444EF] font-medium text-[1rem]"
+                            className=" text-[#1444EF] font-medium text-[1rem] w-[100%]"
                         >
                             Add To cart
                         </button>

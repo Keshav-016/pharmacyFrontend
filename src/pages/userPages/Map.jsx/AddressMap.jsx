@@ -43,7 +43,6 @@ const AddressMap = () => {
     };
 
     const updateCoordinates = (latitude, longitude) => {
-        console.log(latitude, longitude);
         setAddress({ ...address, latitude, longitude });
     };
 
@@ -74,7 +73,6 @@ const AddressMap = () => {
                 longitude: rawData.data.data.location.coordinates[1]
             });
             setType(rawData.data.data.type);
-            console.log(rawData);
         } catch (e) {
             console.log(e);
         }
@@ -91,6 +89,14 @@ const AddressMap = () => {
                 latitude: address.latitude,
                 longitude: address.longitude
             });
+        } else if (
+            address.longitude !== '' &&
+            address.longitude !== undefined
+        ) {
+            setMarker({
+                latitude: address.latitude,
+                longitude: address.longitude
+            });
         } else {
             navigator.geolocation.getCurrentPosition(function (position) {
                 setMarker({
@@ -102,7 +108,6 @@ const AddressMap = () => {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
                 });
-                console.log(2);
             });
         }
     }, [address.longitude, address.latitude]);

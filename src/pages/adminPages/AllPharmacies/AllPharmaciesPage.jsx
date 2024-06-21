@@ -17,6 +17,7 @@ const AllPharmaciesPage = () => {
     const total = useSelector((state) => state.pharmacies.total);
     const searchRef = useRef();
     const pharmaciesData = useSelector((state) => state.pharmacies.data);
+    
     const pharmaciesDataIsLoading = useSelector(
         (state) => state.pharmacies.isLoading
     );
@@ -36,14 +37,8 @@ const AllPharmaciesPage = () => {
         dispatch(searchedPharmacy(searchRef.current.value.trim()));
     };
 
-    return pharmaciesDataIsLoading ? (
-        <Loader />
-    ) : pharmaciesDataIsError ? (
-        <ErrorPage />
-    ) : !pharmaciesData.length ? (
-        <NothingToShow />
-    ) : (
-        <div className=" bg-sky-100 min-h-[90vh] flex flex-col">
+    return (
+        <div className=" bg-[#EBF6F9] min-h-[90vh] flex flex-col">
             <div className=" overflow-x-scroll no-scrollbar">
                 <div className="min-w-[760px] max-w-[1200px] mx-auto">
                     <div className="flex px-2 justify-between mt-6">
@@ -71,39 +66,50 @@ const AllPharmaciesPage = () => {
                                         onChange={handleSearch}
                                         id="default-search"
                                         className="block w-full p-2 px-10 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white outline-none"
-                                        placeholder="Search..."
+                                        placeholder="Pharmacy Name..."
                                         required
                                     />
                                 </div>
                             </form>
                         </div>
                     </div>
-                    <div className="flex flex-col px-2  gap-3 max-w-[1200px] ">
-                        {pharmaciesData?.length ? (
-                            pharmaciesData?.map((item) =>
-                                item.isApproved ? (
-                                    <PharmaciesCard
-                                        PharmaData={item}
-                                        key={item?._id}
-                                    />
-                                ) : (
-                                    <PharmaciesUnapproved
-                                        PharmaData={item}
-                                        key={item?._id}
-                                    />
+                    {pharmaciesDataIsLoading ? (
+                        <Loader />
+                    ) : pharmaciesDataIsError ? (
+                        <ErrorPage />
+                    ) : !pharmaciesData.length ? (
+                        <NothingToShow />
+                    ) : (
+                        <div className="flex flex-col px-2  gap-3 max-w-[1200px] max-h-[59vh] overflow-scroll no-scrollbar">
+                            {pharmaciesData?.length ? (
+                                pharmaciesData?.map((item) =>
+                                    item.isApproved ? (
+                                        <PharmaciesCard
+                                            PharmaData={item}
+                                            key={item?._id}
+                                        />
+                                    ) : (
+                                        <PharmaciesUnapproved
+                                            PharmaData={item}
+                                            key={item?._id}
+                                        />
+                                    )
                                 )
-                            )
-                        ) : (
-                            <div className="flex justify-center items-center h-[60vh]">
-                                No such pharmacy Found
-                            </div>
-                        )}
-                    </div>
+                            ) : (
+                                <div className="flex justify-center items-center h-[60vh]">
+                                    No such pharmacy Found
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col gap-5 mt-auto mx-auto">
                 <ReactPagination setPage={setPage} total={total / 10} />
-                <Footer />
+                <div className="mt-4">
+                    {' '}
+                    <Footer />
+                </div>
             </div>
         </div>
     );

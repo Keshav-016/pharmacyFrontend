@@ -13,7 +13,7 @@ const NothingToShow = () => {
     };
 
     return (
-        <div className=" h-[90vh] bg-[#EBF6F9] flex justify-center items-center">
+        <div className=" bg-[#EBF6F9] flex justify-center items-center">
             <div className="max-w-[80vh]">
                 <Lottie options={defaultOptions} />
             </div>

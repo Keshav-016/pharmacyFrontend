@@ -4,9 +4,17 @@ import { useDropzone } from 'react-dropzone';
 import UserAddress from '../../../components/UserAddress';
 import { useState } from 'react';
 import { IoClose } from 'react-icons/io5';
+import { fetchUserByToken } from '../../../features/userSlice';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 const UploadPrescription = () => {
+    const dispatch = useDispatch();
     const [files, setFiles] = useState([]);
+    useEffect(() => {
+        dispatch(fetchUserByToken());
+    }, []);
+    const user = useSelector((state) => state.user);
 
     const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
         if (acceptedFiles.length) {
@@ -20,7 +28,10 @@ const UploadPrescription = () => {
     }, []);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop
+        onDrop,
+        accept: {
+            'image/png': ['.png', '.jpg']
+        }
     });
 
     const removeFile = (name) => {
@@ -28,7 +39,7 @@ const UploadPrescription = () => {
     };
 
     return (
-        <div className="bg-[#c6dee3] min-h-[90vh] flex flex-col items-center justify-between">
+        <div className="bg-[#EAF6F9] min-h-[90vh] flex flex-col items-center justify-between">
             <div className=" max-w-[1200px]   grid grid-cols-12  w-[100%]   mx-auto py-5  justify-start justify-items-start gap-5 lg:gap-0">
                 <div className="w-[100%]  lg:col-span-8 col-span-12 lg:px-10 px-5">
                     <div className="w-[100%] bg-white rounded-lg lg:p-5 p-4">
@@ -47,8 +58,12 @@ const UploadPrescription = () => {
                                 <div className="flex flex-col gap-3 justify-center items-center">
                                     <p className=" font-default-font-family">
                                         Drop your prescription here!
+                                        <br />
+                                        <span className=" flex justify-center items-center text-[#757575] text-[0.7rem]">
+                                            (File type: .png, .jpg)
+                                        </span>
                                     </p>
-                                    <button className="text-[0.8rem] lg:text-normal border-[0.1rem] border-[#1444EF] px-2 py-1 text-[#1444EF] rounded-md hover:text-white hover:bg-[#1444ef]">
+                                    <button className="text-[0.8rem] lg:text-normal border-[0.1rem] border-[#1444EF] p-3 text-[#1444EF] rounded-md hover:text-white hover:bg-[#1444ef] w-[100%]">
                                         Upload Prescription
                                     </button>
                                 </div>
@@ -84,11 +99,15 @@ const UploadPrescription = () => {
                         </ul>
                     </div>
                 </div>
-                <div className="w-[100%] lg:col-span-4 col-span-12  lg:pe-10 px-5">
-                    <div className="w-[100%] bg-white lg:p-5 p-4 flex flex-col gap-3 rounded-lg">
-                        <UserAddress files={files} setFiles={setFiles} />
+                {user.data !== null ? (
+                    <div className="w-[100%] lg:col-span-4 col-span-12  lg:pe-10 px-5">
+                        <div className="w-[100%] bg-white lg:p-5 p-4 flex flex-col gap-3 rounded-lg">
+                            <UserAddress files={files} setFiles={setFiles} />
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    ''
+                )}
             </div>
             <div className="">
                 <Footer />

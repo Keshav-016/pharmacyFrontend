@@ -3,7 +3,7 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { MdOutlineNoAccounts } from 'react-icons/md';
-import IconButton from '@mui/material/IconButton';
+import axios from 'axios'
 import deleteAccount from '../utils/deleteAccount';
 import { useState, useEffect, useRef } from 'react';
 import { RiArrowDropDownLine } from 'react-icons/ri';
@@ -21,32 +21,93 @@ import Menu from '@mui/material/Menu';
 import List from '@mui/material/List';
 import Box from '@mui/material/Box';
 import Logo from './Logo';
+import { getAllUserOrders } from '../features/userFinalOrderSlice';
 import { searchProductList, fetchProductLists } from '../features/productSlice';
 import {
     fetchAllUserAddress,
     deliveryAddress
 } from '../features/userAddressSlice';
+import { GoTriangleUp } from 'react-icons/go';
 import { useNavigate } from 'react-router-dom';
 import handleConfirmAlert from '../utils/ConfirmTemplate';
 import { notify } from '../App';
 import { getCartItems } from '../features/userCartSlice';
 import { fetchUserByToken } from '../features/userSlice';
+import { io } from 'socket.io-client';
+
+const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+const userSocket = io('http://localhost:3003/', { query: `token=${token}` });
 
 export default function NavbarDefault() {
+    const searchRef = useRef();
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
     const allUserAddress = useSelector((state) => state.userAddress.data);
     const userDeliveryAddress = useSelector(
         (state) => state.userAddress.deliveryAddress
     );
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
+    const isMenuOpen = Boolean(anchorEl);
+    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+    const [currentAddress, setCurrentAddress] = useState('');
     const user = useSelector((state) => state.user);
     const [open, setOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => {
         setOpen(newOpen);
     };
+    const [search, setSearch] = useState('');
+    const [visible, setVisible] = useState(false);
     const userDetails = useSelector((state) => state.user);
+    const cartArr = JSON.parse(localStorage.getItem('cartArray'));
+    const [userLocation, setUserLocation] = useState({});
     const cartItems = useSelector((state) => state.userCart);
-    const searchRef = useRef();
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+
+
+    useEffect(() => {
+        fetchAddress();
+        dispatch(fetchUserByToken());
+        dispatch(getCartItems());
+        dispatch(getAllUserOrders());
+    }, []);
+
+    useEffect(() => {
+        fetchAddress();
+    }, [allUserAddress]);
+
+
+
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        token !== null && setLocalStorageCart();
+    }, []);
+
+    useEffect(() => {
+        if (search === '') {
+            dispatch(fetchProductLists(0));
+        }
+        dispatch(searchProductList(search));
+    }, [search]);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ latitude, longitude });
+                },
+                (error) => {
+                    notify('Error getting user location:', 'error');
+                    console.log(error);
+                }
+            );
+            placesApi(userLocation);
+        } else {
+            notify('Geolocation is not supported by this browser.');
+        }
+    }, []);
 
     const fetchAddress = async () => {
         dispatch(fetchAllUserAddress());
@@ -77,16 +138,8 @@ export default function NavbarDefault() {
         fetchAddress();
         dispatch(fetchUserByToken());
         dispatch(getCartItems());
+        dispatch(getAllUserOrders());
     }, []);
-
-    const location = useLocation();
-    const { pathname } = location;
-
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
-
-    const isMenuOpen = Boolean(anchorEl);
-    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -237,28 +290,40 @@ export default function NavbarDefault() {
                     onClick={handleMenuClose}
                     style={{ padding: '0px 10px' }}
                 >
-                    <IconButton
-                        size="large"
-                        aria-label="show 4 new mails"
-                        color="inherit"
-                    >
-                        <Badge
-                            badgeContent={4}
-                            color="error"
-                            fontSize="0.8rem"
-                            padding="0px"
-                        >
-                            <img src={Cart} />
-                        </Badge>
-                    </IconButton>
-                    <span>Cart</span>
+                    <div size="large" color="inherit">
+                        {user.data === null ? (
+                            <Badge
+                                badgeContent={cartArr?.length}
+                                color="error"
+                                fontSize="0.8rem"
+                                padding="0px"
+                            >
+                                <img src={Cart} />
+                            </Badge>
+                        ) : (
+                            <Badge
+                                badgeContent={cartItems?.length}
+                                color="error"
+                                fontSize="0.8rem"
+                                padding="0px"
+                            >
+                                <img src={Cart} />
+                            </Badge>
+                        )}
+                    </div>
+                    <span className=" font-bold">Cart</span>
                 </MenuItem>
             </Link>
 
-            <MenuItem onClick={handleMenuClose} style={{ padding: '0px 20px' }}>
-                <AccountCircle />
-                <span style={{ marginLeft: '10px' }}>Profile</span>
-            </MenuItem>
+            <Link to="/user-profile">
+                <MenuItem
+                    onClick={handleMenuClose}
+                    style={{ padding: '0px 20px' }}
+                >
+                    <AccountCircle />
+                    <span style={{ marginLeft: '10px' }}>Profile</span>
+                </MenuItem>
+            </Link>
 
             <MenuItem
                 onClick={handleMenuClose}
@@ -268,6 +333,7 @@ export default function NavbarDefault() {
                     size="large"
                     aria-label="show 4 new mails"
                     color="inherit"
+                    onClick={handleLogout}
                 >
                     <Badge badgeContent={4} color="error">
                         <MailIcon />
@@ -279,87 +345,143 @@ export default function NavbarDefault() {
     );
 
     const handleSearchInput = (e) => {
-        if (searchRef.current.value === '') {
-            dispatch(fetchProductLists(0));
-        }
-        dispatch(searchProductList(searchRef.current.value));
+        setSearch(searchRef.current.value);
     };
+
+    const placesApi = async (userLocation) => {
+        try {
+            const response = await axios.get(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&localityLanguage=en`
+            );
+            let address = ' ';
+            response.data.localityInfo.administrative
+                .reverse()
+                .forEach((ele) => {
+                    address += ele.name + ', ';
+                });
+            setCurrentAddress(address);
+        } catch (error) {
+            console.error('There was an error while fetching places:', error);
+        }
+    };
+
+    const setLocalStorageCart = async () => {
+        const cartItemsArray = JSON.parse(localStorage.getItem('cartArray'));
+        if (cartItemsArray?.length >= 1) {
+            try {
+                localStorage.removeItem('cartArray');
+                const token = localStorage.getItem('token');
+                const rawData = await axios({
+                    method: 'put',
+                    url: `http://localhost:3003/cart/add-cart-data`,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    data: {
+                        cartArr: cartItemsArray
+                    }
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    };
+
+    const userOrdersTotal = useSelector(
+        (state) => state.userOrders.totalPendingOrders
+    );
 
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar
                 position="static"
-                sx={
-                    location.pathname === '/'
-                        ? {
-                              background: '#EBF6F9',
-                              boxShadow: '0 0 0 transparent',
-                              height: '10vh'
-                          }
-                        : {
-                              background: '#ffffff',
-                              boxShadow: '0 0 0 transparent',
-                              height: '10vh'
-                          }
-                }
-            >
+                sx={{ display: 'flex', justifyContent: 'center', background: location.pathname === '/' ? '#EBF6F9' : '#FFFFFF', height: '10vh', margin: 'auto' }} >
                 <Toolbar>
-                    <div className="flex md:flex-row md:gap-16  flex-col">
-                        <Typography
-                            variant="h6"
-                            noWrap
-                            component="div"
-                            sx={{ display: { xs: 'block' } }}
-                        >
-                            <Link to="/">
-                                <Logo />
-                            </Link>
-                        </Typography>
+                    <div className="flex md:flex-row md:gap-16 flex-col">
+                        <div sx={{ display: { xs: 'block' } }}>
+                            <Link to="/"> <Logo /></Link>
+                        </div>
 
                         <Typography>
-                            <div className="md:block hidden">
-                                {user.data ? (
-                                    <>
-                                        <span className=" font-default-font-family text-[#8e8c8c] text-[0.8rem] font-medium">
-                                            Delivery to:
-                                        </span>
-                                        <div
-                                            onClick={toggleDrawer(true)}
-                                            className=" flex font-default-font-family text-black font-medium text-[0.8rem] text-nowrap overflow-hidden items-center "
-                                        >
-                                            <span className="overflow-x-hidden w-[170px] ">
-                                                {
-                                                    userDeliveryAddress?.address
-                                                        ?.building
-                                                }
-                                                ,
-                                                {
-                                                    userDeliveryAddress?.address
-                                                        ?.area
-                                                }
-                                                ,
-                                                {
-                                                    userDeliveryAddress?.address
-                                                        ?.city
-                                                }
-                                                ,
-                                                {
-                                                    userDeliveryAddress?.address
-                                                        ?.country
-                                                }
-                                            </span>
-                                            <span
-                                                onClick={toggleDrawer(true)}
-                                                className="text-[1.5rem] cursor-pointer"
-                                            >
-                                                {' '}
-                                                <RiArrowDropDownLine />{' '}
-                                            </span>
+                            <div
+                                className="md:block hidden b relative"
+                                onMouseEnter={() => {
+                                    setVisible(true);
+                                }}
+                                onMouseLeave={() => {
+                                    setVisible(false);
+                                }}
+                            >
+
+                                <span className=" font-default-font-family text-[#8e8c8c] text-[0.8rem] font-medium hover:cursor-pointer">
+                                    Delivery to:
+                                </span>
+                                <div
+                                    onClick={toggleDrawer(true)}
+                                    className="  flex font-default-font-family text-black font-medium text-[0.8rem] text-nowrap overflow-hidden items-center "
+                                >
+
+                                    {allUserAddress.length < 1 ?
+                                        <span className="overflow-x-hidden w-[170px] hover:cursor-pointer ">
+                                            {currentAddress}
+                                        </span> : <span className=' overflow-x-hidden w-[170px]'>{
+                                            userDeliveryAddress
+                                                ?.address?.building
+                                        }
+                                            {
+                                                userDeliveryAddress
+                                                    ?.address?.area
+                                            }
+                                            {
+                                                userDeliveryAddress
+                                                    ?.address?.city
+                                            }
+                                            {
+                                                userDeliveryAddress
+                                                    ?.address?.country
+                                            }</span>}
+                                    {visible && (
+                                        <div className=" left-0 hover:cursor-pointer">
+                                            <GoTriangleUp
+                                                size={'40px'}
+                                                color="white"
+                                                className=" absolute  top-8  left-40"
+                                            />
+                                            {user.data === null ? <div className=" bg-[#ffffff] w-[280px] text-wrap rounded-md flex absolute top-14 left-0 p-5 ">
+                                                {currentAddress}
+                                            </div> :
+                                                <div className=" bg-[#ffffff] w-[280px] text-wrap rounded-md flex absolute top-14 left-0 p-5 ">
+                                                    {
+                                                        userDeliveryAddress
+                                                            ?.address?.building
+                                                    },
+                                                    {
+                                                        userDeliveryAddress
+                                                            ?.address?.area
+                                                    },
+                                                    {
+                                                        userDeliveryAddress
+                                                            ?.address?.city
+                                                    },
+                                                    {
+                                                        userDeliveryAddress
+                                                            ?.address?.country
+                                                    }
+                                                </div>
+                                            }
                                         </div>
-                                    </>
-                                ) : (
-                                    ''
-                                )}
+                                    )}
+
+                                    {user.data !== null && <span
+                                        onClick={toggleDrawer(true)}
+                                        className="text-[1.5rem] cursor-pointer"
+                                    >
+                                        {' '}
+                                        <RiArrowDropDownLine />{' '}
+                                    </span>}
+
+                                </div>
                             </div>
                             <Drawer open={open} onClose={toggleDrawer(false)}>
                                 {DrawerList}
@@ -371,110 +493,158 @@ export default function NavbarDefault() {
 
                     {user.data ? (
                         <>
-                            {pathname === '/meds' ? (
-                                <>
-                                    <input
-                                        type={'text'}
-                                        className="border border-grey p-2 w-[250px] rounded-md font-default-font-family mr-5 outline-none text-black"
-                                        placeholder="search medicines"
-                                        ref={searchRef}
-                                        onChange={handleSearchInput}
-                                    />
-                                </>
-                            ) : (
-                                ''
+                            {location.pathname === '/meds' && (
+                                <input
+                                    type={'text'}
+                                    className="border border-grey px-5 py-2 rounded-md font-default-font-family mr-10 outline-none text-black xl:flex  hidden"
+                                    placeholder="search medicines"
+                                    ref={searchRef}
+                                    value={search}
+                                    onChange={handleSearchInput}
+                                />
                             )}
-                            <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                                <IconButton
-                                    size="large"
-                                    aria-label="show 4 new mails"
-                                    color="inherit"
-                                >
-                                    <Link to="/cart">
-                                        <div
+                            <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: "center", alignItems: 'center', gap: '40px' }}>
+
+                                <div size="large">
+                                    <div
+                                        onClick={() => {
+                                            navigate('/cart');
+                                        }}
+                                        className=" flex justify-center items-center gap-1 hover:cursor-pointer"
+                                    >
+                                        <div className=' relative'>
+                                            <img src={Cart} className=' w-[17px] mb-1' />
+                                            {user.data === null ?
+                                                <span className=" bg-[#D32F2F] flex text-[0.7rem] font-semibold w-[20px] h-[20px]  justify-center items-center m-auto rounded-[50%] text-white">
+                                                    {cartArr?.length}
+                                                </span>
+                                                :
+                                                cartItems.length > 0 &&
+                                                <span className=" absolute bottom-4 left-2 bg-[#D32F2F] flex text-[0.7rem] font-semibold w-[20px] h-[20px]  justify-center items-center m-auto rounded-[50%] text-white">
+                                                    {cartItems?.length}
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <span
                                             style={{
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignContent: 'center',
-                                                marginTop: '10px'
+                                                fontFamily: 'archivo',
+                                                color: 'black',
+                                                fontSize: '1rem',
+                                                fontWeight: 'semiBold'
                                             }}
                                         >
-                                            <img
-                                                src={Cart}
-                                                className=" pb-5 pt-2 w-4"
-                                            />
-                                            {cartItems.length ? (
-                                                <Badge
-                                                    badgeContent={
-                                                        cartItems.length
-                                                    }
-                                                    color="error"
-                                                ></Badge>
-                                            ) : (
-                                                ''
-                                            )}
-                                            <span
-                                                style={{
-                                                    fontFamily: 'archivo',
-                                                    color: 'black',
-                                                    padding: '8px 5px',
-                                                    fontSize: '1rem',
-                                                    marginBottom: '.4rem'
-                                                }}
-                                            >
-                                                Cart{' '}
-                                            </span>
-                                        </div>
-                                    </Link>
-                                </IconButton>
+                                            Cart
+                                        </span>
+                                    </div>
+                                </div>
 
-                                <IconButton
+                                <div size="large">
+                                    <div
+                                        onClick={() => {
+                                            navigate('/user-profile/order');
+                                        }}
+                                        className="  border rounded-md py-2 px-3 bg-[#cbe4eb] flex justify-center items-center gap-2 hover:cursor-pointer"
+                                    >
+                                        <span
+                                            style={{
+                                                fontFamily: 'archivo',
+                                                color: 'black',
+                                                fontSize: '1rem',
+                                                fontWeight: 'semiBold'
+                                            }}
+                                        >
+                                            Pending Orders{' '}
+                                        </span>
+                                        <span className=" bg-[#D32F2F] flex text-[0.9rem] font-semibold w-[20px] h-[20px]  justify-center items-center m-auto rounded-[50%] text-white">
+                                            {userOrdersTotal}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className=' flex justify-center items-center'
                                     size="large"
                                     edge="end"
                                     aria-label="account of current user"
                                     aria-controls={menuId}
-                                    aria-haspopup="true"
                                     onClick={handleProfileMenuOpen}
-                                    color="inherit"
                                 >
                                     <img
-                                        className="bg-[#f5f5f5] w-[40px] h-[40px]  rounded-[50%]"
+                                        className="bg-[#f5f5f5] w-[40px] h-[40px]  rounded-[50%] object-contain"
                                         src={`http://localhost:3003/images/${user.data.image}`}
                                         alt="userImage"
                                     />
                                     <span
+                                        className=' hover:cursor-pointer flex justify-center items-center'
                                         style={{
                                             fontFamily: 'archivo',
                                             color: 'black',
                                             padding: '5px',
-                                            fontSize: '1rem'
+                                            fontSize: '0.9rem',
+                                            fontWeight: 'semiBold'
                                         }}
                                     >
-                                        {userDetails.data.name}{' '}
+                                        <span className=' w-[80px] truncate'>{userDetails.data.name.toUpperCase()}</span>
+                                        < RiArrowDropDownLine size={'25px'} />
                                     </span>
-                                </IconButton>
-                            </Box>{' '}
+                                </div>
+                            </Box>
                         </>
                     ) : (
-                        <IconButton
-                            size="large"
-                            edge="end"
-                            aria-label="account of current user"
-                            aria-controls={menuId}
-                            aria-haspopup="true"
-                            onClick={handleProfileMenuOpen}
-                            color="inherit"
-                        >
-                            <Link to="/login">
-                                <div className=" font-default-font-family text-black text-[1rem] font-bold">
-                                    SignIn
+
+                        <div className=' flex justify-center items-center gap-[15px]'>
+                            <div size="large">
+                                <div
+                                    onClick={() => {
+                                        navigate('/cart');
+                                    }}
+                                    className=" flex justify-center items-center gap-1 hover:cursor-pointer"
+                                >
+                                    <div className=' relative'>
+                                        <img src={Cart} className=' w-[17px] mb-1' />
+                                        {
+                                            cartArr?.length > 0 &&
+                                            <span className=" absolute bottom-4 left-2 bg-[#D32F2F] flex text-[0.7rem] font-semibold w-[20px] h-[20px]  justify-center items-center m-auto rounded-[50%] text-white">
+                                                {cartArr?.length}
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                    <span
+                                        style={{
+                                            fontFamily: 'archivo',
+                                            color: 'black',
+                                            fontSize: '1rem',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Cart
+                                    </span>
                                 </div>
-                            </Link>
-                        </IconButton>
+                            </div>
+
+                            <div
+                                size="large"
+                                edge="end"
+                                aria-label="account of current user"
+                                aria-controls={menuId}
+                                aria-haspopup="true"
+                                onClick={handleProfileMenuOpen}
+                                color="inherit"
+                            >
+                                <Link to="/login">
+                                    <div className=" font-default-font-family text-black text-[1rem] font-bold">
+                                        SignIn
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
                     )}
 
                     <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-                        <IconButton
+                        <div
                             size="large"
                             aria-label="show more"
                             aria-controls={mobileMenuId}
@@ -482,15 +652,10 @@ export default function NavbarDefault() {
                             onClick={handleMobileMenuOpen}
                             color="inherit"
                         >
-                            {user.data ? (
-                                <>
-                                    <MoreIcon sx={{ color: 'black' }} />
-                                </>
-                            ) : (
-                                ''
-                            )}
-                        </IconButton>
+                            {user.data && <MoreIcon sx={{ color: 'black' }} />}
+                        </div>
                     </Box>
+
                 </Toolbar>
             </AppBar>
             {renderMobileMenu}
@@ -498,3 +663,4 @@ export default function NavbarDefault() {
         </Box>
     );
 }
+export { userSocket };

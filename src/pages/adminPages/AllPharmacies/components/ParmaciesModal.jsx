@@ -27,7 +27,7 @@ const ParmaciesModal = ({ onClose, PharmaData }) => {
             <div
                 ref={modalRef}
                 onClick={closeModal}
-                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex  "
+                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex z-10 "
             >
                 <div className=" bg-white rounded-2xl m-auto p-7 flex-col gap-5 items-center w-[90%] sm:w-[70%]  ">
                     <div className="flex justify-between">
@@ -62,7 +62,11 @@ const ParmaciesModal = ({ onClose, PharmaData }) => {
                                             )
                                         }
                                     />
-                                    <spane className="ml-5 ">Deactivate</spane>
+                                    <spane className="ml-5 w-[80px]">
+                                        {PharmaData?.pharmacistId?.isBlocked
+                                            ? 'Activate'
+                                            : 'Deactivate'}
+                                    </spane>
                                 </div>
                             </div>
                         </div>

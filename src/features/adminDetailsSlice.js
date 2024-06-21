@@ -1,11 +1,12 @@
-import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { notify } from '../App';
 import axios from 'axios';
 
 export const fetchAdminDetails = createAsyncThunk(
     'admin/fetchAdminDetails',
     async function () {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: 'http://localhost:3003/admin/details',
@@ -25,7 +26,7 @@ export const updateAdminImage = createAsyncThunk(
     'admin/updateAdminImage',
     async function (formData) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'put',
                 url: 'http://localhost:3003/admin/update-image',
@@ -68,6 +69,7 @@ const adminSlice = createSlice({
         builder.addCase(updateAdminImage.fulfilled, (state, action) => {
             state.data = { ...state.data, image: action.payload.data.data };
             (state.isLoading = false), (state.isError = false);
+            notify('Profile picture updated successfully!', 'success');
         });
         builder.addCase(updateAdminImage.rejected, (state, action) => {
             (state.isLoading = false), (state.isError = true);

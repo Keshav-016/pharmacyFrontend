@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { current } from '@reduxjs/toolkit';
 import { notify } from '../App';
 
 const baseUrl = 'http://localhost:3003';
@@ -20,7 +21,8 @@ export const fetchUser = createAsyncThunk(
             });
             return rawData;
         } catch (e) {
-            notify(e.response.data.message);
+            console.log(e.response.data.message);
+            return Promise.reject(e);
         }
     }
 );
@@ -43,7 +45,8 @@ export const fetchUserByToken = createAsyncThunk(
             });
             return rawData.data.data;
         } catch (e) {
-            notify(e.response.data.message);
+            console.log(e.response.data.message);
+            return Promise.reject(e);
         }
     }
 );
@@ -67,6 +70,7 @@ export const verifyUserOtp = createAsyncThunk(
             return rawData.data.data.customerData;
         } catch (e) {
             notify(e.response.data.message);
+            return Promise.reject(e);
         }
     }
 );
@@ -85,13 +89,13 @@ export const updateUserDetails = createAsyncThunk(
                 },
                 data: {
                     name: userObj?.newName,
-                    phone: userObj?.newPhone,
-                    dob: userObj?.newDob
+                    phone: userObj?.newPhone
                 }
             });
             return rawData.data.data;
         } catch (e) {
             notify(e.response.data.message);
+            return Promise.reject(e);
         }
     }
 );
@@ -113,6 +117,7 @@ export const updateUserProileImage = createAsyncThunk(
             return rawData.data.data;
         } catch (e) {
             notify(e.response.data.message);
+            return Promise.reject(e);
         }
     }
 );
@@ -123,11 +128,6 @@ const userSlice = createSlice({
         isLoading: false,
         data: null,
         isError: false
-    },
-    reducers: {
-        setUser(state, action) {
-            state.fullName = action.payload.name;
-        }
     },
     extraReducers: (builder) => {
         builder.addCase(fetchUser.pending, (state) => {
@@ -159,7 +159,7 @@ const userSlice = createSlice({
         builder.addCase(updateUserDetails.fulfilled, (state, action) => {
             state.isLoading = false;
             state.data = action.payload;
-            notify('Your data is update successfully!');
+            notify('Your data is update successfully!', 'success');
         });
         builder.addCase(updateUserDetails.rejected, (state) => {
             state.isLoading = false;
@@ -184,6 +184,7 @@ const userSlice = createSlice({
         builder.addCase(updateUserProileImage.fulfilled, (state, action) => {
             state.isLoading = false;
             state.data = { ...state.data, image: action.payload };
+            notify('Profile picture uploaded successfully!', 'success')
         });
         builder.addCase(updateUserProileImage.rejected, (state) => {
             state.isLoading = false;
@@ -192,5 +193,4 @@ const userSlice = createSlice({
     }
 });
 
-export const { setUser } = userSlice.actions;
 export default userSlice.reducer;

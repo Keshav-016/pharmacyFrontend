@@ -8,6 +8,7 @@ import notify from '../App';
 import { useDispatch } from 'react-redux';
 import { fetchFinalOrders } from '../features/orderSlice';
 import ImageModal from './ImageModal';
+import handleConfirmAlert from '../utils/ConfirmTemplate';
 
 const PharmacistOrderCards = ({ order }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -32,12 +33,38 @@ const PharmacistOrderCards = ({ order }) => {
         const month = months[date.getMonth()];
         const year = date.getFullYear();
         const hour = date.getHours();
+        const convertedHour = hour > 12 ? hour - 12 : hour;
         const minutes = date.getMinutes();
 
-        return `${month} ${day}, ${year}  ${hour}:${minutes}`;
+        return `${month} ${day}, ${year}  \u00A0\u00A0\u00A0\u00A0\u00A0 ${convertedHour}:${minutes} ${hour < 12 ? 'AM' : hour < 24 ? 'PM' : 'AM'}`;
     };
     const dispatch = useDispatch();
-    const handleDecline = async () => {
+
+    const updateStatus = () => {
+        handleConfirmAlert('question','', 'Are your sure the order is delivered?' , 'Yes, Delivered' , () => {updateOrderStatus()});
+    }
+
+    const updateOrderStatus = async () => {
+        if (order.status === 'delivered') return;
+        try {
+            const token =
+                sessionStorage.getItem('token') ||
+                localStorage.getItem('token');
+            await axios({
+                method: 'put',
+                url: `http://localhost:3003/final-order/update-delivery-status?id=${order?.orderId?._id}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            dispatch(fetchFinalOrders());
+        } catch (errror) {
+            notify(errror.response.data.message);
+        }
+    };
+
+    const declineOrder = async () => {
         try {
             const token =
                 localStorage.getItem('token') ||
@@ -51,9 +78,19 @@ const PharmacistOrderCards = ({ order }) => {
                 }
             });
             dispatch(fetchFinalOrders());
+            notify(`Successfully , declied order : ${order?.orderId?._id}`);
         } catch (error) {
             notify(error?.response?.data?.message);
         }
+    };
+    const handleDecline = async () => {
+        handleConfirmAlert(
+            'question',
+            '',
+            'Are you sure you want to decline order',
+            'Yes',
+            () => declineOrder()
+        );
     };
     return (
         <>
@@ -88,9 +125,10 @@ const PharmacistOrderCards = ({ order }) => {
                     </div>
                     <div className="lg:ms-auto col-span-5 lg:col-span-1 mt-7">
                         <p
-                            className={`w-fit px-4 rounded-md text-white text-[0.9rem] ${order.status === 'CONFIRMED' ? 'bg-orange-500' : 'bg-green-500'}`}
+                            className={`w-fit px-4 rounded-md text-white text-[0.9rem] cursor-pointer ${order.status === 'confirmed' ? 'bg-orange-500' : 'bg-green-500'}`}
+                            onClick={updateStatus}
                         >
-                            {order?.status}
+                            {order?.status?.toUpperCase()}
                         </p>
                     </div>
                 </div>
@@ -105,7 +143,7 @@ const PharmacistOrderCards = ({ order }) => {
                             .map((item, index) => {
                                 return (
                                     <div
-                                        className="flex flex-col sm:flex-row gap-1"
+                                        className="flex flex-col sm:flex-row justify-between"
                                         key={index}
                                     >
                                         <span className=" overflow-hidden text-ellipsis max-w-[300px] text-nowrap text-[0.9rem] flex">
@@ -114,7 +152,7 @@ const PharmacistOrderCards = ({ order }) => {
                                                 {item?.medicineId?.name}
                                             </span>
                                         </span>
-                                        <span className="text-text-grey text-[0.9rem]">
+                                        <span className="text-text-grey text-[0.9rem] me-14">
                                             QTY: {item?.quantity}
                                         </span>
                                     </div>
@@ -152,16 +190,14 @@ const PharmacistOrderCards = ({ order }) => {
                         </div>
                     </div>
                     <div className="flex gap-2 col-span-3 lg:col-span-2 mt-10 ps-10 md:ms-auto">
-                        {order.status === 'CONFIRMED' ? (
+                        {order.status === 'confirmed' ? (
                             <div className="w-[10rem]">
                                 <ButtonOutlined handleClick={handleDecline}>
                                     Decline
                                 </ButtonOutlined>
                             </div>
                         ) : (
-                            <div className="w-[10rem]">
-                                <></>
-                            </div>
+                            <div className="w-[10rem]"></div>
                         )}
 
                         <div className="w-[10rem]">

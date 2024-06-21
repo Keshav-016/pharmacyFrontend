@@ -12,7 +12,7 @@ function DeliveredOrder() {
         () =>
             orders?.data?.length &&
             orders?.data?.filter(
-                (item) => item.orderId.status === 'delivered',
+                (item) => item.status === 'delivered',
                 [orders]
             )
     );
@@ -21,10 +21,10 @@ function DeliveredOrder() {
     ) : orders?.error ? (
         <ErrorPage />
     ) : !deliveredOrders?.length ? (
-        <NothingToShow />
+        <div className=' h-[68vh]'><NothingToShow /></div>
     ) : (
         <div
-            className={`flex max-w-[1200px]  mx-auto flex-col gap-3 px-2 ${orders?.data?.length === 0 && 'mt-[20vh]'}`}
+            className={`flex max-w-[1200px] no-scrollbar h-[68vh] overflow-y-scroll  mx-auto flex-col gap-3 px-2 ${orders?.data?.length === 0 && 'mt-[20vh]'}`}
         >
             {deliveredOrders?.map((item) => {
                 return <PharmacistOrderCards key={item._id} order={item} />;

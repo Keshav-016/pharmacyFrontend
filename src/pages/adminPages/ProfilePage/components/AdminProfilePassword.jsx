@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import Button from '../../../../components/Button';
 import PasswordInput from '../../../../components/PasswordInput';
+import { checkPassword } from '../../../../validators/validatZod';
 import showAlert from '../../../../components/showAlert';
 import { notify } from '../../../../App';
 import axios from 'axios';
@@ -11,11 +12,11 @@ const AdminProfilePassword = () => {
     const matchNewPassRef = useRef();
     const [oldPass, setOldPass] = useState('');
     const [newPass, setNewPass] = useState('');
+    const [errorPass, setErrorPass] = useState([]);
     const [matchNewPass, setMatchNewPass] = useState('');
 
     const checkPasswordMatch = () => {
         if (newPass !== matchNewPass) {
-            console.log("New Password doesn't match");
             notify("New Password doesn't match");
             return false;
         }
@@ -27,9 +28,29 @@ const AdminProfilePassword = () => {
             notify('Feilds requied!');
             return;
         }
+        if (oldPass === newPass) {
+            notify('Old Password Cannot Be Same As New Password');
+            return;
+        }
+
+        const checkZodValidation = () => {
+            const resPassword = checkPassword.safeParse({
+                password: newPass
+            });
+            if (resPassword.success) {
+                return true;
+            } else {
+                setErrorPass(
+                    resPassword.error.issues.map((err) => err.message)
+                );
+                notify(errorPass[0]);
+                return false;
+            }
+        };
+
         try {
-            if (checkPasswordMatch()) {
-                const adminToken = localStorage.getItem('token');
+            if (checkPasswordMatch() && checkZodValidation()) {
+                const adminToken = localStorage.getItem('adminToken');
                 const rawData = await axios({
                     method: 'put',
                     url: 'http://localhost:3003/admin/update-password',
@@ -42,6 +63,9 @@ const AdminProfilePassword = () => {
                         newPassword: newPass
                     }
                 });
+                oldPassRef.current.value='';
+                newPassRef.current.value='';
+                matchNewPassRef.current.value='';
                 rawData.data.message === 'success'
                     ? showAlert('success', 'Password updated successfully')
                     : notify('Unable to update password!');
@@ -76,6 +100,7 @@ const AdminProfilePassword = () => {
                         handleChange={getOldPassword}
                         value={oldPass}
                         key={true}
+                        required={true}
                     />
                     <PasswordInput
                         inputLabel={'New Password'}

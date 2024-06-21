@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 const GlobalInput = ({
     inputLabel,
     placeholder,
@@ -8,16 +6,18 @@ const GlobalInput = ({
     type,
     handleChange,
     maxlength,
-    required = false
+    required = false,
+    id
 }) => {
     return (
-        <div className="flex flex-col gap-1 py-2">
+        <div className="flex flex-col gap-1 py-2 h-[5rem]">
             <p className=" font-default-font-family text-text-grey text-[0.8rem]">
                 {inputLabel}
                 {required ? <span className="ms-1">*</span> : ''}
             </p>
             <input
-                maxlength={maxlength}
+                id={id}
+                maxLength={maxlength}
                 defaultValue={value}
                 type={type}
                 placeholder={placeholder}

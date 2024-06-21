@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export const fetchQuotations = createAsyncThunk(
@@ -41,6 +41,7 @@ export const makeOffer = createAsyncThunk(
             });
             return Promise.resolve(rawData.data.data);
         } catch (e) {
+            console.log(e);
             return Promise.reject(e);
         }
     }
@@ -52,6 +53,18 @@ const quotationSlice = createSlice({
         data: null,
         isLoading: false,
         error: false
+    },
+    reducers: {
+        addMedicine(state, action) {
+            state.data.forEach((item, index) => {
+                if (item._id === action.payload.id) {
+                    state.data[index].medicines.push({
+                        medicineId: action.payload.medicineId,
+                        quantity: action.payload.quantity
+                    });
+                }
+            });
+        }
     },
     extraReducers: (builder) => {
         builder.addCase(fetchQuotations.pending, (state, action) => {
@@ -85,6 +98,6 @@ const quotationSlice = createSlice({
     }
 });
 
-export const {} = quotationSlice.actions;
+export const { addMedicine } = quotationSlice.actions;
 
 export default quotationSlice.reducer;

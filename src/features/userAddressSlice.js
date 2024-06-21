@@ -55,5 +55,5 @@ const userAddressSlice = createSlice({
     }
 });
 
-export const { deliveryAddress, clearUserAddress } = userAddressSlice.actions;
+export const { deliveryAddress, clearUserAddress,updateNewAddress } = userAddressSlice.actions;
 export default userAddressSlice.reducer;

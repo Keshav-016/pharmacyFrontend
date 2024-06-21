@@ -1,6 +1,12 @@
 import AutoCompleteInput from './AutoCompleteInput';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { checkName, checkPhoneNumber } from '../../../validators/validatZod';
+import { fetchAllUserAddress } from '../../../features/userAddressSlice';
+import { updateNewAddress } from '../../../features/userAddressSlice';
+import { useState } from 'react';
+import { notify } from '../../../App';
+import { useDispatch } from 'react-redux';
 
 export default function AddressForm({
     address,
@@ -20,185 +26,204 @@ export default function AddressForm({
     handleHotel
 }) {
     const navigate = useNavigate();
+    const [errorName, setErrorName] = useState([]);
+    const [errorPhone, setErrorPhone] = useState([]);
+    const dispatch= useDispatch();
     const handleManualInputChange = (event, stateProperty) => {
         const newAddress = { ...address };
         newAddress[stateProperty] = event.target.value;
         setAddress(newAddress);
     };
 
+    function checkValues() {
+        if (errorName.length !== 0 && errorPhone.length === 0) {
+            notify(errorName[0]);
+            return false;
+        } else if (errorName.length === 0 && errorPhone.length !== 0) {
+            notify(errorPhone[0]);
+            return false;
+        } else if (userName === '' || userPhone === '') {
+            notify('Enter name, phone correctly');
+            return false;
+        } else if (errorName.length === 0 && errorPhone.length === 0) {
+            return true;
+        }
+    }
+
     const handleFormSubmit = async (event) => {
         event.preventDefault();
-
-        if (isEditable) {
-            try {
-                const token = localStorage.getItem('token');
-                const rawData = await axios({
-                    method: 'put',
-                    url: `http://localhost:3003/user-address/update-address?id=${id}`,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    data: {
-                        phone: userPhone,
-                        receiverName: userName,
-                        coordinates: [address.latitude, address.longitude],
-                        address: {
-                            building: userBuilding,
-                            country: address.country,
-                            city: address.place,
-                            area: address.streetAndNumber,
-                            state: address.region,
-                            postcode: address.postcode
+        if(userName === '' || userPhone ==='' || address.building === '' || address.country=== '' || address.city === '' || address.postcode === '' || type === ''){
+            notify('Fill all feilds');
+            return;
+        }
+        const zodValidation = checkValues();
+        if (zodValidation === true) {
+            if (isEditable) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const rawData = await axios({
+                        method: 'put',
+                        url: `http://localhost:3003/user-address/update-address?id=${id}`,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        data: {
+                            phone: userPhone,
+                            receiverName: userName,
+                            coordinates: [address.latitude, address.longitude],
+                            address: {
+                                building: userBuilding,
+                                country: address.country,
+                                city: address.place,
+                                area: address.streetAndNumber,
+                                state: address.region,
+                                postcode: address.postcode
+                            }
                         }
+                    });
+                    setAddress({
+                        building: userBuilding,
+                        country: rawData.data.data.address.country,
+                        city: rawData.data.data.address.place,
+                        area: rawData.data.data.address.streetAndNumber,
+                        state: rawData.data.data.address.region,
+                        postcode: rawData.data.data.address.postcode
+                    });
+                    if (rawData.data.message === 'success') {
+                        navigate('/user-profile/address');
                     }
-                });
-                setAddress({
-                    building: userBuilding,
-                    country: rawData.data.data.address.country,
-                    city: rawData.data.data.address.place,
-                    area: rawData.data.data.address.streetAndNumber,
-                    state: rawData.data.data.address.region,
-                    postcode: rawData.data.data.address.postcode
-                });
-                console.log(rawData);
-                if (rawData.data.message === 'success') {
-                    navigate('/user-profile/address');
+                } catch (e) {
+                    console.log(e.response.data.message);
                 }
-            } catch (e) {
-                console.log(e.response.data.message);
-            }
-        } else {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('No token exists');
-                }
-                const rawData = await axios({
-                    method: 'post',
-                    url: `http://localhost:3003/user-address/add-address`,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    data: {
-                        phone: userPhone,
-                        receiverName: userName,
-                        type: type,
-                        coordinates: [address.latitude, address.longitude],
-                        address: {
-                            building: userBuilding,
-                            country: address.country,
-                            city: address.place,
-                            area: address.streetAndNumber,
-                            state: address.region,
-                            postcode: address.postcode
+            } else {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('No token exists');
+                    }
+                    const rawData = await axios({
+                        method: 'post',
+                        url: `http://localhost:3003/user-address/add-address`,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        data: {
+                            phone: userPhone,
+                            receiverName: userName,
+                            type: type,
+                            coordinates: [address.latitude, address.longitude],
+                            address: {
+                                building: userBuilding,
+                                country: address.country,
+                                city: address.place,
+                                area: address.streetAndNumber,
+                                state: address.region,
+                                postcode: address.postcode
+                            }
                         }
+                    });
+                    if (rawData.data.message === 'success') {
+                        navigate('/user-profile/address');
                     }
-                });
-                console.log(rawData);
-                if (rawData.data.message === 'success') {
-                    navigate('/user-profile/address');
+                    notify('Address added successfully!', 'success');
+                    console.log(dispatch(updateNewAddress));
+                } catch (e) {
+                    console.log(e.response.data.message);
                 }
-            } catch (e) {
-                console.log(e.response.data.message);
             }
         }
-    };
-
-    const handleUserNameChange = (e) => {
-        setUserName(e.target.value);
-    };
-
-    const handlePhoneChange = (e) => {
-        setUserPhone(e.target.value);
     };
 
     const handleUserBuildingNameChange = (e) => {
         setUserBuilding(e.target.value);
     };
 
-    console.log(type);
-
     return (
         <form className="flex flex-col gap-3" onSubmit={handleFormSubmit}>
-            {isEditable ? (
-                ''
-            ) : (
-                <div className=" flex justify-between p-5">
-                    {type === 'home' ? (
-                        <button
-                            type="button"
-                            className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
-                        >
-                            Home
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => handleHome()}
-                            className=" border-[0.09rem] py-1 px-2 rounded-md text-grey text-[0.9rem]"
-                            type="button"
-                        >
-                            Home
-                        </button>
-                    )}
-                    {type === 'work' ? (
-                        <button
-                            type="button"
-                            className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
-                        >
-                            Work
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => handleWork()}
-                            className=" border-[0.09rem] py-1 px-2 rounded-md text-grey text-[0.9rem]"
-                        >
-                            Work
-                        </button>
-                    )}
-                    {type === 'hotel' ? (
-                        <button
-                            type="button"
-                            className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
-                        >
-                            Hotel
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                handleHotel();
-                            }}
-                            className=" border-[0.09rem] py-1 px-2 rounded-md text-grey text-[0.9rem]"
-                        >
-                            Hotel
-                        </button>
-                    )}
-                    {type === 'other' ? (
-                        <button
-                            type="button"
-                            className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
-                        >
-                            Other
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => handleOther()}
-                            className=" border-[0.09rem] py-1 px-2 rounded-md text-grey text-[0.9rem]"
-                        >
-                            Other
-                        </button>
+            <div className=" grid justify-between items-center grid-cols-12">
+                <span className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem] md:col-span-4 col-span-12">
+                    Address Type
+                </span>
+                <div className=" md:col-span-8 col-span-12">
+                    {!isEditable && (
+                        <div className=" flex justify-between lg:justify-end md:gap-3 md:p-3  ">
+                            {type === 'home' ? (
+                                <button
+                                    type="button"
+                                    className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
+                                >
+                                    Home
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleHome()}
+                                    className=" border-[0.09rem] py-1 px-2 rounded-md text-[#757575] border-[#757575] text-[0.9rem]"
+                                    type="button"
+                                >
+                                    Home
+                                </button>
+                            )}
+                            {type === 'work' ? (
+                                <button
+                                    type="button"
+                                    className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
+                                >
+                                    Work
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => handleWork()}
+                                    className=" border-[0.09rem] py-1 px-2 rounded-md text-[#757575] border-[#757575] text-[0.9rem]"
+                                >
+                                    Work
+                                </button>
+                            )}
+                            {type === 'hotel' ? (
+                                <button
+                                    type="button"
+                                    className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
+                                >
+                                    Hotel
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleHotel();
+                                    }}
+                                    className=" border-[0.09rem] py-1 px-2 rounded-md text-[#757575] border-[#757575] text-[0.9rem]"
+                                >
+                                    Hotel
+                                </button>
+                            )}
+                            {type === 'other' ? (
+                                <button
+                                    type="button"
+                                    className="border-[0.09rem] border-[#1444ef] px-2 py-1 rounded-md text-[#1444ef] text-[0.9rem]"
+                                >
+                                    Other
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => handleOther()}
+                                    className=" border-[0.09rem] py-1 px-2 rounded-md text-[#757575] border-[#757575] text-[0.9rem]"
+                                >
+                                    Other
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
-            )}
+            </div>
             <div className=" grid grid-cols-2 gap-4">
                 <div className="flex flex-col justify-stretch sm:col-span-1 col-span-2">
                     <label
                         htmlFor="recieversName"
-                        className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                        className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                     >
                         Recievers Name
                     </label>
@@ -207,14 +232,26 @@ export default function AddressForm({
                         type="text"
                         placeholder="name"
                         value={userName}
-                        onChange={handleUserNameChange}
+                        onChange={(e) => {
+                            const resName = checkName.safeParse({
+                                name: e.target.value
+                            });
+                            resName.success
+                                ? setErrorName([])
+                                : setErrorName(
+                                      resName.error.issues.map(
+                                          (err) => err.message
+                                      )
+                                  );
+                            setUserName(e.target.value);
+                        }}
                     />
                 </div>
 
                 <div className="flex flex-col justify-stretch sm:col-span-1 col-span-2">
                     <label
                         htmlFor="phoneno"
-                        className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                        className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                     >
                         Phone Number
                     </label>
@@ -222,15 +259,27 @@ export default function AddressForm({
                         className="outline-none font-default-font-family placeholder-[#ABABB2] placeholder-font-[0.5rem] bg-[#f5f5f5] lg:p-[0.8rem] p-[0.4rem] text-[0.9rem] font-medium rounded-md w-[100%]"
                         type="text"
                         placeholder="phone"
-                        onChange={handlePhoneChange}
                         value={userPhone}
+                        onChange={(e) => {
+                            const resPhone = checkPhoneNumber.safeParse({
+                                phone: e.target.value
+                            });
+                            resPhone.success
+                                ? setErrorPhone([])
+                                : setErrorPhone(
+                                      resPhone.error.issues.map(
+                                          (err) => err.message
+                                      )
+                                  );
+                            setUserPhone(e.target.value);
+                        }}
                     />
                 </div>
             </div>
             <div className="flex flex-col justify-stretch">
                 <label
                     htmlFor="building"
-                    className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                    className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                 >
                     House Number,Building Name
                 </label>
@@ -246,7 +295,7 @@ export default function AddressForm({
             <div className="flex flex-col gap-0">
                 <label
                     htmlFor="address"
-                    className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                    className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                 >
                     Area
                 </label>
@@ -261,7 +310,7 @@ export default function AddressForm({
             <div className="flex flex-col justify-stretch">
                 <label
                     htmlFor="city"
-                    className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                    className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                 >
                     City
                 </label>
@@ -279,7 +328,7 @@ export default function AddressForm({
 
             <label
                 htmlFor="state"
-                className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
             >
                 State/Region
             </label>
@@ -296,7 +345,7 @@ export default function AddressForm({
                 <div className="flex flex-col gap-0 sm:col-span-1 col-span-2">
                     <label
                         htmlFor="postcode"
-                        className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                        className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                     >
                         Postcode
                     </label>
@@ -315,7 +364,7 @@ export default function AddressForm({
                 <div className="flex flex-col gap-0 sm:col-span-1 col-span-2">
                     <label
                         htmlFor="country"
-                        className=" ms-1 font-default-font-family text-text-grey text-[0.8rem]"
+                        className=" ms-1 font-default-font-family text-text-[#212126] text-[0.8rem]"
                     >
                         Country
                     </label>

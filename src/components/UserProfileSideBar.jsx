@@ -1,13 +1,15 @@
 import { IoMdLogOut } from 'react-icons/io';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUserProileImage } from '../features/userSlice';
+import { checkProfilePictureType } from '../validators/validatZod';
 import handleConfirmAlert from '../utils/ConfirmTemplate';
 import { useState } from 'react';
 import { notify } from '../App';
 
 const UserProfileSideBar = () => {
     const [currPage, setCurrPage] = useState(window.location.pathname);
+    const [profileImg, setProfileImg] = useState(null);
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -20,7 +22,9 @@ const UserProfileSideBar = () => {
     const updateImage = (e) => {
         const formData = new FormData();
         formData.append('profile', e.target.files[0]);
-        dispatch(updateUserProileImage(formData));
+        const resFile = checkProfilePictureType.safeParse({ profImg: e.target.files[0] });
+        if(!resFile.success) { notify('Only .jpg, .png and .jpeg format are suppoted!'); return; }
+        setProfileImg(e.target.files[0]);
     };
 
     const setHandleLogouts = () => {
@@ -28,6 +32,12 @@ const UserProfileSideBar = () => {
         navigate('/login');
         notify('You have been logged out ');
     };
+
+    const handleUploadImage = (e) => {
+        const formData = new FormData();
+        formData.append('profile', profileImg);
+        dispatch(updateUserProileImage(formData));
+    }
 
     const handleLogout = () => {
         handleConfirmAlert(
@@ -65,59 +75,61 @@ const UserProfileSideBar = () => {
     return (
         <>
             <div className="flex gap-10 flex-col justify-center p-3   ">
-                <div className="flex gap-1 lg:justify-center justify-between items-center pe-3">
-                    <div className="flex lg:flex-row flex-col">
-                        <div>
+                <div className=' flex justify-between flex-col gap-3'>
+                    <div className="flex gap-1 lg:justify-center justify-between items-center   ">
+                        <div className="flex xs:flex-row flex-col gap-1 lg:justify-between sm:w-[100%] ">
                             <img
-                                className="bg-[#f5f5f5] w-[100px] h-[100px]  rounded-[50%]"
-                                src={`http://localhost:3003/images/${user?.data?.image}`}
+                                className="bg-[#e4e4e4] xxl:w-[150px] xxl:h-[150px] w-[100px] h-[100px] rounded-[50%]  object-contain"
+                                src={profileImg !== null ? URL.createObjectURL(profileImg) : `http://localhost:3003/images/${user?.data?.image}`}
                                 alt="userImage"
                             />
-                        </div>
-                        <div className="flex justify-center items-center flex-col gap-2">
-                            <span className=" font-default-font-family text-[0.6rem] text-center text-grey ">
-                                Allowed file types:
-                                <div className=" font-default-font-family text-black m-0 leading-3">
-                                    png, jpg, jpeg
-                                </div>
-                            </span>
-                            <label
-                                htmlFor="files"
-                                className="text-[0.7rem] font-default-font-family text-[#1444ef] border-[0.02rem] border-[#1444ef] rounded-sm  px-2  cursor-pointer"
-                            >
-                                Browse
-                            </label>
-                            <input
-                                type="file"
-                                id="files"
-                                className=" hidden my-5 rounded-md p-1 text-center text-[0.7rem]"
-                                onChange={(e) => {
-                                    updateImage(e);
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className=" block lg:hidden">
-                        <form>
-                            <select
-                                id="countries"
-                                className=" text-sm rounded-lg p-2.5 font-default-font-family w-[110px]"
-                                onChange={handleChange}
-                            >
-                                <option value="/user-profile">
-                                    Edit Profie
-                                </option>
-                                <option value="/user-profile/address">
-                                    Manage Address
-                                </option>
-                                <option value="/user-profile/order">
-                                    My Orders
-                                </option>
-                            </select>
-                        </form>
-                    </div>
-                </div>
 
+                            <div className="flex justify-center items-center flex-col gap-2">
+                                <span className=" font-default-font-family xl:text-[0.7rem] text-[0.8rem]  text-center text-[#737A83] ">
+                                    Allowed file types:
+                                    <div className=" font-default-font-family text-black m-0 leading-3">
+                                        png, jpg, jpeg
+                                    </div>
+                                </span>
+                                <label
+                                    htmlFor="files"
+                                    className="text-[0.7rem] font-default-font-family text-[#1444ef] border-[0.02rem] border-[#1444ef] rounded-sm  px-2  cursor-pointer"
+                                >
+                                    Browse
+                                </label>
+                                <input
+                                    type="file"
+                                    id="files"
+                                    className=" hidden my-5 rounded-md p-1 text-center text-[0.7rem]"
+                                    onChange={(e) => {
+                                        updateImage(e);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <div className=" block lg:hidden">
+                            <form>
+                                <select
+                                    className=" text-sm rounded-lg p-2.5 font-default-font-family w-[110px]"
+                                    onChange={handleChange}
+                                >
+                                    <option value="/user-profile">
+                                        Edit Profie
+                                    </option>
+                                    <option value="/user-profile/address">
+                                        Manage Address
+                                    </option>
+                                    <option value="/user-profile/order">
+                                        My Orders
+                                    </option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+
+                    <button onClick={handleUploadImage} className=' bg-[#fff] text-[#1444ef] border border-[#1444ef] text-[0.8rem] py-1 rounded-md mb-50 '> upload profile photo</button>
+
+                </div>
                 <div className="lg:flex hidden flex-col gap-40 justify-between">
                     <div className="lg:flex flex-col font-default-font-family gap-2 ">
                         <h1 className="text-[1.2rem] font-medium">
@@ -132,7 +144,7 @@ const UserProfileSideBar = () => {
                                         onClick={() => {
                                             handleRoutes(item.route);
                                         }}
-                                        className={`${currPage === item.route ? 'text-[0.9rem] text-blue-700 font-medium hover:cursor-pointer' : 'text-[0.9rem] text-grey font-medium hover:cursor-pointer'}`}
+                                        className={`${currPage === item.route ? 'text-[0.9rem] text-blue-700 font-medium hover:cursor-pointer' : 'text-[0.9rem] text-[#737A83] font-medium hover:cursor-pointer'}`}
                                     >
                                         {item.name}
                                     </h2>
@@ -150,7 +162,7 @@ const UserProfileSideBar = () => {
                                             onClick={() => {
                                                 handleRoutes(item.route);
                                             }}
-                                            className={`${currPage === item.route ? 'text-[0.9rem] text-blue-700 font-medium hover:cursor-pointer' : 'text-[0.9rem] text-grey font-medium hover:cursor-pointer'}`}
+                                            className={`${currPage === item.route ? 'text-[0.9rem] text-blue-700 font-medium hover:cursor-pointer' : 'text-[0.9rem] text-[#737A83] font-medium hover:cursor-pointer'}`}
                                         >
                                             {item.name}
                                         </h2>

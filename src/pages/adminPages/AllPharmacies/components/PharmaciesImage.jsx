@@ -22,7 +22,7 @@ const PharmaciesImage = ({ setOpen, open, currCerificate }) => {
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
     return (
-        <div>
+        <div className='z-10'>
             <Modal
                 open={open}
                 onClose={handleClose}

@@ -64,11 +64,11 @@ const pharmaciesUnapproved = ({ PharmaData }) => {
                     </h3>
                 </div>
 
-                <div className="col-span-2 ">
+                <div className="col-span-2 truncate">
                     <h4 className="text-[0.9rem] text-[#737A83] mb-1">
                         Reg. no
                     </h4>
-                    <h3 className="text-[0.94rem] text-[#000000]">
+                    <h3 className="text-[0.94rem] text-[#000000] truncate">
                         {PharmaData?.registration_no}
                     </h3>
                 </div>
@@ -78,32 +78,31 @@ const pharmaciesUnapproved = ({ PharmaData }) => {
                         Certificates
                     </h4>
                     <h3 className="text-[0.94rem] text-[#000000] flex justify-between w-[120px] ">
-                        {PharmaData?.certificates[0]?.name}
+                        
                         <span
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleCertificate(
-                                    PharmaData?.certificates[0]?.file
+                                    PharmaData?.certificates[0]
                                 );
                             }}
                             className=" hover:cursor-pointer text-[0.8rem] text-[#1444ef] font-default-font-family"
                         >
-                            view
+                            view certificate 1
                         </span>
                     </h3>
 
                     <h3 className="text-[0.94rem] text-[#000000]  flex justify-between w-[120px] ">
-                        {PharmaData?.certificates[1]?.name}
                         <span
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleCertificate(
-                                    PharmaData?.certificates[0]?.file
+                                    PharmaData?.certificates[1]
                                 );
                             }}
                             className="hover:cursor-pointer text-[0.8rem] text-[#1444ef]  font-default-font-family"
                         >
-                            view
+                            view certificate 2
                         </span>
                     </h3>
                 </div>

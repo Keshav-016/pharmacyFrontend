@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { notify } from '../App';
 
 const baseUrl = `http://localhost:3003`;
 
@@ -25,6 +26,9 @@ export const searchProductList = createAsyncThunk(
     'product/searchProductList',
     async function (data) {
         try {
+            if (data === '') {
+                return;
+            }
             const rawData = await axios({
                 method: 'get',
                 url: `${baseUrl}/medicines/search-medicine?name=${data}`,
@@ -43,7 +47,7 @@ export const deleteProducts = createAsyncThunk(
     'product/deleteProducts',
     async function (id) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'delete',
                 url: `${baseUrl}/medicines/delete-medicine?id=${id}`,
@@ -63,7 +67,7 @@ export const updateProducts = createAsyncThunk(
     'product/updateProducts',
     async function (medsObj) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken') ;
             const rawData = await axios({
                 method: 'put',
                 url: `${baseUrl}/medicines/update-medicine?id=${medsObj.id}`,
@@ -72,11 +76,10 @@ export const updateProducts = createAsyncThunk(
                     Authorization: `Bearer ${token}`
                 },
                 data: {
-                    name: medsObj.name,
-                    price: medsObj.price,
-                    pack_size_label: medsObj.pack_size_label
+                    ...medsObj
                 }
             });
+            notify('Successfully Editted', 'success');
             return rawData;
         } catch (e) {
             console.log(e);
@@ -89,6 +92,7 @@ const productSlice = createSlice({
     initialState: {
         isLoading: false,
         data: [],
+        searchedProducts: [],
         isError: false
     },
     extraReducers: (builder) => {
@@ -97,8 +101,8 @@ const productSlice = createSlice({
             state.isError = false;
         });
         builder.addCase(fetchProductLists.fulfilled, (state, action) => {
-            state.data = action?.payload?.data?.data.medicineData;
-            state.total = action?.payload?.data?.data?.total / 12;
+            state.data = action?.payload?.data?.data?.medicineData;
+            state.total = action?.payload?.data?.data?.total;
             state.isLoading = false;
             state.isError = false;
         });
@@ -112,7 +116,7 @@ const productSlice = createSlice({
             state.isError = false;
         });
         builder.addCase(searchProductList.fulfilled, (state, action) => {
-            state.data = action.payload.data.data;
+            state.data = action?.payload?.data?.data;
             state.isLoading = false;
             state.isError = false;
         });

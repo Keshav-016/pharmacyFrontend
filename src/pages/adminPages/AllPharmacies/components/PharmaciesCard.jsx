@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ParmaciesModal from './ParmaciesModal';
-import SwitchButton from '../../../../components/SwitchButton';
 
 const PharmaciesCard = ({ PharmaData }) => {
     const [showModal, setShowModal] = useState(false);

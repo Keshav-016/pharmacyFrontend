@@ -5,7 +5,7 @@ export default {
         extend: {
             colors: {
                 button: '#1444EF',
-                'text-grey': '#727273',
+                'text-grey': '#DDE0E2',
                 'grey-bg': '#F5F5F5',
                 'btn-border': '#D3D8E4',
                 primary: '#1444EF',
@@ -14,6 +14,7 @@ export default {
             },
 
             screens: {
+                xs: '400px',
                 sm: '640px',
                 md: '768px',
                 lg: '1024px',

@@ -5,7 +5,7 @@ import { deleteFromCustomerList } from '../../../../features/adminAllCustomersSl
 import { useDispatch, useSelector } from 'react-redux';
 import { blockUser } from '../../../../features/adminAllCustomersSlice';
 
-const CustomerData = ({ page }) => {
+const CustomerData = () => {
     const dispatch = useDispatch();
     const allCustomers = useSelector((state) => state.adminAllCustomer.data);
     const handleBlock = (checked, userId) => {
@@ -14,7 +14,7 @@ const CustomerData = ({ page }) => {
     const handleCustomerDelete = async (id) => {
         handleConfirmAlert(
             'question',
-            'warning',
+            'Delete User?',
             'Are you sure you want to delete this user',
             'Yes',
             () => dispatch(deleteFromCustomerList(id))
@@ -38,7 +38,7 @@ const CustomerData = ({ page }) => {
                                       : item?.phone}
                               </div>
                               <div className="py-4 col-span-3 me-10">
-                                  {item?.addressId?.address?.area === ''
+                                  {item?.addressId?.address?.area === undefined
                                       ? '---'
                                       : item?.addressId?.address?.building +
                                         ', ' +

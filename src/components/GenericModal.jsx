@@ -13,7 +13,7 @@ const GenericModal = ({ children, onClose, heading }) => {
             <div
                 ref={modalRef}
                 onClick={closeModal}
-                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex "
+                className=" z-10 fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex "
             >
                 <div className=" bg-white rounded-2xl m-auto p-7 flex-col gap-5 items-center w-[90%] sm:w-[70%] md:w-auto ">
                     <div className="flex justify-between sm:gap-[200px]">

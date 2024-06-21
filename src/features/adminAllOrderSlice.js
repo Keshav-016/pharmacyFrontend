@@ -5,7 +5,7 @@ export const getAllOrdersDetails = createAsyncThunk(
     'adminAllOrder/getAllOrdersDetails',
     async function ({ page }) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: `http://localhost:3003/user-order/get-all?page=${page}`,

@@ -30,7 +30,6 @@ import PharmaProfile from './pages/prarmacistPages/ProfilePage/PharmaProfile.jsx
 import PharmaTemplate from './components/PharmaTemplate.jsx';
 import PharmacistProfileComponent from './pages/prarmacistPages/ProfilePage/component/PharmacistProfileComponent.jsx';
 import Quotation from './pages/prarmacistPages/QuotationPage/Quotation';
-import PharmaRegister from './pages/prarmacistPages/registrationPage/PharmaRegister.jsx';
 import PharmacistProfilePassword from './pages/prarmacistPages/ProfilePage/component/PharmacistProfilePassword.jsx';
 import PharmaSecondaryTemplate from './components/PharmaSecondaryTemplate.jsx';
 import DeliveredOrder from './pages/prarmacistPages/deliveredOrder/DeliveredOrder.jsx';
@@ -40,7 +39,13 @@ import MedicineModal from './pages/adminPages/AllMedicinesPage/components/Medici
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AdminOrderPreview from './pages/adminPages/AllOrderPage/components/AdminOrderPreview.jsx';
-import UsersPendingOrders from './components/UsersPendingOrders.jsx'
+import UsersPendingOrders from './components/UsersPendingOrders.jsx';
+// import RegisterPharma from './pages/prarmacistPages/registrationPage/RegisterPharma.jsx'
+import RegisterPharma from './pages/prarmacistPages/registrationPage/RegisterPharma.jsx';
+import RoleModal from '../src/pages/RoleModal.jsx';
+import PaymentSuccess from './utils/payment/PaymentSuccess.jsx';
+import PaymentFailure from './utils/payment/PaymentFailure.jsx';
+import SendLink from './pages/prarmacistPages/LoginPage/SendLink.jsx';
 
 const notify = (msg, type = 'error') =>
     toast(msg, {
@@ -49,14 +54,15 @@ const notify = (msg, type = 'error') =>
         pauseOnFocusLoss: false,
         hideProgressBar: true
     });
-
 function App() {
     return (
         <>
             <ToastContainer />
             <Routes>
+                <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/admin-login" element={<LoginPage />} />
-
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-failed" element={<PaymentFailure />} />
                 <Route path="/admin" element={<Admin />}>
                     <Route
                         path="/admin/all-pharmacies"
@@ -105,8 +111,9 @@ function App() {
                 />
 
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<PharmaRegister />} />
+                <Route path="/pharma-register" element={<RegisterPharma />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/send-email" element={<SendLink/>} />
                 <Route path="/password" element={<ForgotPassword />} />
                 <Route path="/pharma-login" element={<PharmaLogin />} />
                 <Route path="/" element={<Empty />}>

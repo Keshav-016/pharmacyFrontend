@@ -9,23 +9,25 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { makeOffer } from '../../../../features/quotationsSlice';
 import AddMedicineModal from './AddMedicineModal.jsx';
 import showAlert from '../../../../components/showAlert.js';
 import { notify } from '../../../../App.jsx';
 import ImageModal from '../../../../components/ImageModal.jsx';
 import ToggleSwitch from '../../../../components/ToggleSwitch.jsx';
+import dayjs from 'dayjs';
+import { fetchFinalOrders } from '../../../../features/orderSlice.js';
+import axios from 'axios';
+import { price } from '../../../../validators/validatZod.js';
 
 const OrderDetails = ({ order, setOrder }) => {
     const [originalPrice, setOriginalPrice] = useState(null);
     const [medicines, setMedicines] = useState([]);
     const [percent, setPercent] = useState(null);
     const [inputPrice, setInputPrice] = useState(null);
-    const [finalPrice, setFinalPrice] = useState(null);
     const [date, setDate] = useState(null);
     const [day, setDay] = useState(null);
-    const [datePicker, setDatePicker] = useState(null);
     const [slot, setSlot] = useState(1);
     const [notes, setNotes] = useState('');
     const [modal, setModal] = useState(false);
@@ -52,7 +54,9 @@ const OrderDetails = ({ order, setOrder }) => {
             medicines
                 ?.reduce((acc, curr) => {
                     if (curr.isAvailable === true)
-                        return acc + Number(curr.medicineId.price);
+                        return (
+                            acc + Number(curr.medicineId.price) * curr.quantity
+                        );
                     else return acc + 0;
                 }, 0)
                 .toFixed(2)
@@ -60,7 +64,10 @@ const OrderDetails = ({ order, setOrder }) => {
     }, [medicines]);
 
     useEffect(() => {
-        if (!!percent) setFinalPrice((originalPrice * (100 - percent)) / 100);
+        if (!!percent)
+            setInputPrice(
+                parseFloat((originalPrice * (100 - percent)) / 100).toFixed(2)
+            );
     }, [originalPrice]);
 
     useEffect(() => {
@@ -76,22 +83,60 @@ const OrderDetails = ({ order, setOrder }) => {
         setSlot(1);
         setNotes('');
         setDay(null);
-        setFinalPrice(null);
+        setInputPrice(null);
         setInputPrice(null);
         setPercent(null);
     }, [order]);
+
+    const handleDecline = async () => {
+        try {
+            showAlert('error', 'Offer successfully rejected');
+            let total = 0;
+            order?.medicines.map((meds) => {
+                total =
+                    total + Number(meds?.medicineId?.price) * meds?.quantity;
+                total = parseFloat(total.toFixed(2));
+            });
+            const obj = {
+                orderId: order._id,
+                medicines: medicines,
+                notes,
+                deliveryDate: new Date(),
+                deliverySlot: slot,
+                price: total
+            };
+            dispatch(makeOffer(obj));
+            const token =
+                localStorage.getItem('token') ||
+                sessionStorage.getItem('token');
+            await axios({
+                method: 'DELETE',
+                url: `http://localhost:3003/final-order/decline-order?orderId=${order?._id}`,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            dispatch(fetchFinalOrders());
+            setOrder(null);
+        } catch (error) {
+            notify(error?.response?.data?.message);
+        }
+    };
 
     const dateView = (date) => {
         const day = date.getDate();
         const month = months[date.getMonth()];
         const year = date.getFullYear();
         const hour = date.getHours();
+        const convertedHour = hour > 12 ? hour - 12 : hour;
         const minutes = date.getMinutes();
 
-        return `${month} ${day}, ${year}  ${hour}:${minutes < 10 ? '0' + minutes : minutes}`;
+        return `${month} ${day}, ${year}  \u00A0 ${convertedHour}:${minutes} ${hour < 12 ? 'AM' : hour < 24 ? 'PM' : 'AM'}`;
     };
 
     const handleOffer = () => {
+        const priceCheck = price.safeParse({price:parseFloat(inputPrice)});
         if (
             medicines.reduce((acc, curr) => {
                 if (curr.isAvailable == true) return acc + 1;
@@ -99,9 +144,11 @@ const OrderDetails = ({ order, setOrder }) => {
             }, 0) === 0
         ) {
             notify('please select atleast an available medicine');
-        } else if (!finalPrice) {
+        } else if (!inputPrice) {
             notify('please provide the offered price');
-        } else if (!date) {
+        } else if (!priceCheck.success) {
+            notify('Offered price cannot be negative');
+        }else if (!date) {
             notify('please provide the delivery date');
         } else {
             showAlert('success', 'Offer successfully placed');
@@ -110,9 +157,9 @@ const OrderDetails = ({ order, setOrder }) => {
                     orderId: order._id,
                     medicines: medicines,
                     notes,
-                    deliveryDate: date,
+                    deliveryDate: date.$d,
                     deliverySlot: slot,
-                    price: finalPrice
+                    price: inputPrice
                 })
             );
             setOrder(null);
@@ -123,29 +170,18 @@ const OrderDetails = ({ order, setOrder }) => {
         if (myDate === 'Today') {
             setDay('Today');
             const today = new Date();
-            setDate(today);
-            setDatePicker(null);
-        } else if (myDate === 'Tommorrow') {
-            setDay('Tommorrow');
+            setDate(dayjs(today));
+        } else if (myDate === 'Tomorrow') {
+            setDay('Tomorrow');
             const today = new Date();
             today.setDate(today.getDate() + 1);
-            setDate(today);
-            setDatePicker(null);
+            setDate(dayjs(today));
         }
-    };
-
-    const transformDate = () => {
-        if (!date) return '';
-        const month = date?.getMonth() + 1;
-        const year = date?.getFullYear();
-        const day = date?.getDate();
-        const currentDate = day + '/' + month + '/' + year;
-        return currentDate;
     };
 
     const updateMedicine = (id) => {
         const newMedicine = medicines?.map((item, ind) => {
-            if (item._id === id)
+            if (item.medicineId._id === id)
                 medicines[ind].isAvailable = !medicines[ind].isAvailable;
             return item;
         });
@@ -155,7 +191,7 @@ const OrderDetails = ({ order, setOrder }) => {
     return (
         <>
             {!order ? (
-                <div className="w-[100%] h-[100%] bg-white flex justify-center items-center border rounded-lg my-2">
+                <div className="w-[100%] h-[100%] bg-white flex justify-center items-center border rounded-lg p-5 my-5">
                     <h3 className="text-text-grey text-xl">
                         Click an order to view
                     </h3>
@@ -167,7 +203,9 @@ const OrderDetails = ({ order, setOrder }) => {
                             Order Details
                         </h4>
                         <div className="flex gap-3 min-w-[200px] mb-3">
-                            <ButtonOutlined>Decline</ButtonOutlined>
+                            <ButtonOutlined handleClick={handleDecline}>
+                                Decline
+                            </ButtonOutlined>
                             <Button handleClick={handleOffer}>
                                 Make Offer
                             </Button>
@@ -180,12 +218,14 @@ const OrderDetails = ({ order, setOrder }) => {
                         </div>
                         <div className="flex flex-col">
                             <span className=" text-text-grey">Placed On</span>
-                            <span>{dateView(new Date(order.createdAt))}</span>
+                            <span>{dateView(new Date(order?.createdAt))}</span>
                         </div>
                     </div>
                     <div className="flex justify-between my-6">
                         <div className="flex flex-wrap">
-                            <h5 className="text-nowrap">{order.userId.name}</h5>
+                            <h5 className="text-nowrap">
+                                {order?.userId?.name}
+                            </h5>
                             <span className="text-text-grey text-nowrap">
                                 {' '}
                                 (Customer Name)
@@ -196,12 +236,15 @@ const OrderDetails = ({ order, setOrder }) => {
                         </button>
                     </div>
                     <div className="my-6">
-                        {medicines?.map((item) => {
+                        {medicines?.map((item, index) => {
                             return (
-                                <div className="flex flex-col xs:flex-row justify-between my-5 sm:my-3">
+                                <div
+                                    className="flex flex-col xs:flex-row justify-between my-5 sm:my-3"
+                                    key={index}
+                                >
                                     <div className="flex items-center my-1 flex-wrap">
                                         <FaCaretRight color="#737A83" />
-                                        <h5>{item.medicineId.name}</h5>
+                                        <h5>{item?.medicineId?.name}</h5>
                                         <h5 className="ms-3 text-text-grey text-nowrap">
                                             QTY: {item.quantity}
                                         </h5>
@@ -210,7 +253,9 @@ const OrderDetails = ({ order, setOrder }) => {
                                         <ToggleSwitch
                                             checked={item.isAvailable}
                                             setChecked={() => {
-                                                updateMedicine(item._id);
+                                                updateMedicine(
+                                                    item.medicineId._id
+                                                );
                                             }}
                                         />
                                         <div className="min-w-[100px]">
@@ -236,16 +281,21 @@ const OrderDetails = ({ order, setOrder }) => {
                     <div className="grid grid-cols-12 my-4">
                         <div className="col-span-12 md:col-span-4 mb-6 sm:mb-3">
                             <h6 className="text-text-grey text-sm mb-1">
-                                MRP TOTAL:
+                                MRP Total:
                             </h6>
                             <h5> ₹ {originalPrice}</h5>
                         </div>
-                        <div className="col-span-12 md:col-span-4 mb-6 sm:mb-3">
+                        <div className="col-span-12 md:col-span-4 mb-6 sm:mb-3 pe-4">
                             <h6 className="text-text-grey text-sm mb-1">
                                 Shipping Address:
                             </h6>
-                            {order?.address?.building}, {order?.address?.area},{' '}
-                            {order?.address?.landmark} -{order?.address?.pin}
+                            <div className=" overflow-x-scroll no-scrollbar ">
+                                {order?.address?.building},
+                                {order?.address?.area},{order?.address?.city},
+                                {order?.address?.state},
+                                {order?.address?.country}, Pin -{' '}
+                                {order?.address?.postcode}
+                            </div>
                         </div>
                         <div className="col-span-12 md:col-span-4 mb-6 sm:mb-3">
                             <h6 className="text-text-grey text-sm mb-1">
@@ -273,22 +323,23 @@ const OrderDetails = ({ order, setOrder }) => {
                         </div>
                     </div>
                     <hr />
-                    <div className="grid grid-cols-12 gap-3 my-3">
-                        <h5 className="col-span-8 md:col-span-4 text-text-grey">
+                    <div className="grid grid-cols-12 my-3">
+                        <h5 className="col-span-8 md:col-span-4 text-text-grey flex items-center">
                             Offer your price:
                         </h5>
-                        <div className="col-span-12 md:col-span-8 grid grid-cols-12 gap-2 p-4">
+                        <div className="col-span-12 md:col-span-8 grid grid-cols-12 gap-2 py-4">
                             {[10, 15, 20, 25].map((item, ind) => {
                                 return (
                                     <h5
                                         key={ind}
-                                        className={`col-span-6 rounded-md px-2 py-1 border border-grey-bg ${item === percent ? 'text-white bg-primary' : 'bg-[#E9EDF8] text-primary border border-btn-border'}`}
+                                        className={`col-span-6 rounded-md px-2 py-1 border border-grey-bg cursor-pointer ${item === percent ? 'text-white bg-primary' : 'bg-[#E9EDF8] text-primary border border-btn-border'}`}
                                         onClick={() => {
                                             setPercent(item);
-                                            setInputPrice(null);
-                                            setFinalPrice(
-                                                originalPrice *
-                                                    ((100 - item) / 100)
+                                            setInputPrice(
+                                                parseFloat(
+                                                    originalPrice *
+                                                        ((100 - item) / 100)
+                                                ).toFixed(2)
                                             );
                                         }}
                                     >
@@ -304,7 +355,7 @@ const OrderDetails = ({ order, setOrder }) => {
                         </div>
                     </div>
                     <div className="grid grid-cols-12  my-2">
-                        <h5 className="col-span-12 md:col-span-4 text-text-grey">
+                        <h5 className="col-span-12 md:col-span-4 text-text-grey flex items-center">
                             Offer More:
                         </h5>
                         <div className="col-span-12 md:col-span-8 flex py-4 ">
@@ -319,31 +370,16 @@ const OrderDetails = ({ order, setOrder }) => {
                                     setPercent(null);
                                 }}
                             />
-                            <button
-                                onClick={() => {
-                                    if (!!inputPrice)
-                                        setFinalPrice(Number(inputPrice));
-                                }}
-                                className="col-span-6 bg-[#E9EDF8] rounded-md px-3 py-1 text-primary border border-primary hover:bg-button hover:text-white"
-                            >
-                                Add
-                            </button>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-12  my-2">
-                        <h5 className="col-span-12 md:col-span-4 text-text-grey">
-                            Offered price
-                        </h5>
-                        <h6>{finalPrice?.toFixed(2)}</h6>
                     </div>
                     <hr />
                     <div className="grid grid-cols-12  my-2">
-                        <h5 className="col-span-12 md:col-span-4 flex items-center text-text-grey">
+                        <h5 className="col-span-12 md:col-span-4 py-4 text-text-grey">
                             Select Delivery Date:
                         </h5>
                         <div className="col-span-12 md:col-span-8 flex py-4 flex-col">
                             <div className="flex mb-3">
-                                {['Today', 'Tommorrow'].map((item) => {
+                                {['Today', 'Tomorrow'].map((item) => {
                                     return (
                                         <>
                                             {day === item ? (
@@ -375,22 +411,13 @@ const OrderDetails = ({ order, setOrder }) => {
                                         <DatePicker
                                             label="Delivery Date"
                                             format="DD/MM/YYYY"
-                                            value={datePicker}
+                                            value={date}
                                             onChange={(newValue) => {
-                                                setDatePicker(newValue);
+                                                setDate(newValue);
                                             }}
                                         />
                                     </DemoContainer>
                                 </LocalizationProvider>
-                                <button
-                                    onClick={() => {
-                                        setDate(datePicker.$d);
-                                        setDay(null);
-                                    }}
-                                    className=" my-2 col-span-6 bg-[#E9EDF8] border border-primary rounded-md px-3 py-2 text-primary hover:bg-button hover:text-white"
-                                >
-                                    Add
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -413,12 +440,6 @@ const OrderDetails = ({ order, setOrder }) => {
                             })}
                         </div>
                     </div>
-                    <div className="grid grid-cols-12  my-2">
-                        <h5 className="col-span-12 md:col-span-4 text-text-grey">
-                            Delivery Date
-                        </h5>
-                        <h6>{transformDate()}</h6>
-                    </div>
                     <hr />
                     <textarea
                         value={notes}
@@ -439,6 +460,7 @@ const OrderDetails = ({ order, setOrder }) => {
                             onClose={() => {
                                 setModal(false);
                             }}
+                            data={order}
                         />
                     ) : (
                         <></>

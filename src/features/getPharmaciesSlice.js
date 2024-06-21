@@ -6,7 +6,7 @@ export const getPharmaciesDetails = createAsyncThunk(
     'pharmacies/getPharmaciesDetails',
     async function (page) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: `http://localhost:3003/pharma-data/getAll?page=${page}`,
@@ -27,7 +27,7 @@ export const searchedPharmacy = createAsyncThunk(
     'pharmacies/searchPharmacy',
     async function (data) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: `http://localhost:3003/pharma-data/search?name=${data}`,
@@ -48,7 +48,7 @@ export const pharmaciesApproval = createAsyncThunk(
     'pharmacies/pharmaciesApproval',
     async function (id) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'put',
                 url: `http://localhost:3003/pharma-data/approve?id=${id}`,
@@ -72,7 +72,7 @@ export const pharmaciesReject = createAsyncThunk(
     'pharmacies/pharmaciesReject',
     async function (id) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'delete',
                 url: `http://localhost:3003/pharma-data/reject?id=${id}`,
@@ -96,7 +96,7 @@ export const pharmaciesBlock = createAsyncThunk(
     'pharmacies/pharmaciesBlock',
     async function ({ id, checked }) {
         try {
-            const adminToken = localStorage.getItem('token');
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'put',
                 url: `http://localhost:3003/pharmacist/update-pharmacist?id=${id}`,

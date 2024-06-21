@@ -5,10 +5,10 @@ function PharmaSecondaryTemplate() {
     return (
         <div className="min-h-[90vh] bg-[#EBF6F9] pt-5">
             <PharmacistSubNav />
-            <div className="mb-5 min-h-[73vh]">
+            <div className="mb-5">
                 <Outlet />
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center my-3">
                 <Footer />
             </div>
         </div>

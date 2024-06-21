@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
+import { MdKeyboardArrowDown } from "react-icons/md";
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -21,14 +22,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchFinalOrders } from '../features/orderSlice';
 import { fetchQuotations } from '../features/quotationsSlice';
 import handleConfirmAlert from '../utils/ConfirmTemplate';
-const settings = ['Profile', 'Logout'];
+import { io } from 'socket.io-client';
 
+const settings = ['Profile', 'Logout'];
+const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+const pharmaSocket = io('http://localhost:3003/', { query: `token=${token}` });
 function PharmacistNav() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [newOrder, setNewOrder] = useState(null);
+    const [newQuotation, setNewQuotation] = useState(null);
 
     const pharmacist = useSelector((state) => state.pharmacist.data);
-
+    pharmaSocket.on('quotationAccepted', (data) => {
+        setNewOrder(data);
+    });
+    pharmaSocket.on('orderPlaced', (data) => {
+        setNewQuotation(data);
+    });
     useEffect(() => {
         dispatch(fetchPharmacistDetails());
         dispatch(fetchFinalOrders());
@@ -40,6 +51,12 @@ function PharmacistNav() {
             navigate('/pharma-login');
         }
     }, []);
+    useEffect(() => {
+        dispatch(fetchFinalOrders());
+    }, [newOrder]);
+    useEffect(() => {
+        dispatch(fetchQuotations());
+    }, [newQuotation]);
 
     const [anchorElUser, setAnchorElUser] = useState(null);
     const [location, setLocation] = useState();
@@ -117,18 +134,22 @@ function PharmacistNav() {
                             ''
                         )}
                     </div>
-                    <Box sx={{ flexGrow: 0 }}>
-                        <Tooltip title="Open settings">
-                            <IconButton
+                    <div sx={{ flexGrow: 0 }}>
+                        <div title="Open settings">
+                            <div
                                 onClick={handleOpenUserMenu}
-                                sx={{ p: 0 }}
+                                sx={{ "&:hover": { backgroundColor: "transparent" }, p:0} }
                             >
+                                <div className=' flex gap-1 justify-center items-center'>
                                 <Avatar
                                     alt="Remy Sharp"
                                     src={`http://localhost:3003/images/${pharmacist?.image}`}
                                 />
-                            </IconButton>
-                        </Tooltip>
+                                <span className=' text-[1rem] text-black'>{pharmacist?.name}</span>
+                                <span><MdKeyboardArrowDown color='black' siz   value={{ size: '10px' }} /></span>
+                                </div>
+                            </div>
+                        </div>
                         <Menu
                             sx={{ mt: '45px', marginLeft: 'auto' }}
                             id="menu-appbar"
@@ -162,10 +183,11 @@ function PharmacistNav() {
                                 </MenuItem>
                             ))}
                         </Menu>
-                    </Box>
+                    </div>
                 </Toolbar>
             </Container>
         </AppBar>
     );
 }
 export default PharmacistNav;
+export { pharmaSocket };

@@ -62,7 +62,7 @@ const PharmacistOrderPreview = ({ order }) => {
                             </span>
                             <span>
                                 {dateView(
-                                    new Date(order.quotationId.deliveryDate)
+                                    new Date(order?.quotationId?.deliveryDate)
                                 )}
                             </span>
                         </div>
@@ -71,13 +71,13 @@ const PharmacistOrderPreview = ({ order }) => {
                             <span className=" text-text-grey ">
                                 Seller Name
                             </span>
-                            <span>{order.pharmacistId.name}</span>
+                            <span>{order?.pharmacistId?.name}</span>
                         </div>
 
                         <div
                             className={`bg-orange-600 text-white px-2 py-1 rounded-md`}
                         >
-                            {order.status}
+                            {order?.status}
                         </div>
                     </div>
 
@@ -116,7 +116,7 @@ const PharmacistOrderPreview = ({ order }) => {
                             <span className=" text-text-grey">
                                 Shipment Total:
                             </span>
-                            <span>₹{order.quotationId.price}</span>
+                            <span>₹{order?.quotationId?.price}</span>
                         </div>
                         <div className="flex flex-col sm:col-span-5 col-span-6">
                             <span className=" text-text-grey">
@@ -186,7 +186,7 @@ const PharmacistOrderPreview = ({ order }) => {
                                             Total:
                                         </span>
                                         <span className="text-[1.1rem] font-medium">
-                                            ₹{order.quotationId.price}
+                                            ₹{order?.quotationId?.price}
                                         </span>
                                     </div>
                                 </div>

@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 const orders = ({ setOrder, order }) => {
-    const orders = useSelector((state) => state.quotations.data);
+    const orders = useSelector((state) => state?.quotations?.data);
+    useEffect(() => {
+        if (order != null && order?.length !== 0) {
+            const selectedQuotation = orders?.filter(
+                (item) => item?._id === order?._id
+            );
+            setOrder(selectedQuotation[0]);
+        } else {
+            setOrder(null);
+        }
+    }, [orders]);
     return (
         <>
             <div className="rounded-sm my-2">

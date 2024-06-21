@@ -7,6 +7,7 @@ import { fetchUser, verifyUserOtp } from '../../../features/userSlice';
 import { useDispatch } from 'react-redux';
 import { notify } from '../../../App';
 import axios from 'axios';
+import ButtonOutlined from '../../../components/ButtonOutlined';
 
 const VerifyEmail = () => {
     const [otp, setOtp] = useState('');
@@ -39,7 +40,7 @@ const VerifyEmail = () => {
 
     const handleResendOtp = () => {
         dispatch(fetchUser({ email, otp }));
-        notify('email resend, please check your email');
+        notify('OTP resend, check email', 'success');
     };
 
     return (
@@ -66,12 +67,9 @@ const VerifyEmail = () => {
                 </div>
                 <div className="flex flex-col my-3 gap-2">
                     <Button handleClick={handleVerify}>Verify</Button>
-                    <div
-                        className="text-[#1444EF] text-center"
-                        onClick={handleResendOtp}
-                    >
-                        Rsend
-                    </div>
+                    <ButtonOutlined handleClick={handleResendOtp}>
+                        Resend
+                    </ButtonOutlined>
                 </div>
             </div>
         </AuthenticationTemplate>

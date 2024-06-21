@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import handleConfirmAlert from '../utils/ConfirmTemplate';
 import { notify } from '../App';
 import showAlert from './showAlert';
+import { RiArrowDropDownLine } from 'react-icons/ri';
 
 const pages = [
     { name: 'Customer', route: '/admin/customer-list' },
@@ -26,7 +27,7 @@ const pages = [
     { name: 'Pharmacies', route: '/admin/all-pharmacies' }
 ];
 const settings = [
-    { name: 'DashBoard', route: '/admin/admin-profile/edit' },
+    { name: 'Dashboard', route: '/admin/admin-profile/edit' },
     { name: 'Logout' }
 ];
 
@@ -104,7 +105,8 @@ function AdminNav() {
                     background: '#fff',
                     display: 'flex',
                     top: 0,
-                    left: 0
+                    left: 0,
+                    zIndex: 10
                 }}
             >
                 <Container maxWidth="xl">
@@ -264,14 +266,17 @@ function AdminNav() {
                         <Box sx={{ flexGrow: 0 }}>
                             <Tooltip title="Open settings">
                                 <IconButton
+                                className=' flex justify-center items-center gap-1'
                                     onClick={handleOpenUserMenu}
                                     sx={{ p: 0 }}
                                 >
                                     <img
-                                        className="bg-[#f5f5f5] w-[40px] h-[40px]  rounded-[50%]"
+                                        className="bg-[#f5f5f5] w-[40px] h-[40px]  rounded-[50%] object-contain"
                                         src={`http://localhost:3003/images/${adminData?.image}`}
                                         alt="userImage"
                                     />
+                                    <span className=' text-[1rem] font-default-font-family  font-bold  text-black'>{adminData?.name}</span>
+                                    <RiArrowDropDownLine size={'35px'} color='black' />
                                 </IconButton>
                             </Tooltip>
 

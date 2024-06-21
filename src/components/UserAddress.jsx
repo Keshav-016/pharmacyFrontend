@@ -1,4 +1,3 @@
-import axios from 'axios';
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -9,13 +8,17 @@ import { deliveryAddress } from '../features/userAddressSlice';
 import handleConfirmAlert from '../utils/ConfirmTemplate';
 import { useState } from 'react';
 import { addNewOrder } from '../features/userFinalOrderSlice';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { notify } from '../App';
 
 const UserAddress = ({ files, total, setFiles }) => {
     const allUserAddress = useSelector((state) => state.userAddress.data);
+    const user = useSelector((state) => state.user);
     const cartItems = useSelector((state) => state.userCart);
+    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
     const dispatch = useDispatch();
+    console.log(user)
     const [path, setPath] = useState(window.location.pathname);
 
     const handleModal = () => {
@@ -38,6 +41,10 @@ const UserAddress = ({ files, total, setFiles }) => {
     };
 
     const handleCartModal = () => {
+        if (allUserAddress.length < 1) {
+            notify('Add a new address to continue!');
+            return;
+        }
         handleConfirmAlert(
             '',
             'Please Confirm Your Order',
@@ -45,6 +52,28 @@ const UserAddress = ({ files, total, setFiles }) => {
             'Yes, Confirm',
             handleFileUpload
         );
+    };
+
+    const handleCart = () => {
+        if (user.data === null) {
+            handleConfirmAlert(
+                '',
+                '',
+                'Please Login to continue',
+                'Login',
+                () => {
+                    navigate('/login');
+                }
+            );
+            return;
+        } else {
+            if (cartItems < 1) {
+                notify('Cannot place empty order');
+                return;
+            } else {
+                handleCartModal();
+            }
+        }
     };
 
     const DrawerList = (
@@ -98,16 +127,14 @@ const UserAddress = ({ files, total, setFiles }) => {
                         </Link>
                     </>
                 ) : (
-                    <>
-                        <div
-                            onClick={() => {
-                                navigate('/user-address');
-                            }}
-                            className=" flex items-center justify-center text-[#1444ef] text-[0.9rem] underline cursor-pointer"
-                        >
-                            +Add New Address
-                        </div>
-                    </>
+                    <div
+                        onClick={() => {
+                            navigate('/user-address');
+                        }}
+                        className=" flex items-center justify-center text-[#1444ef] text-[0.9rem] underline cursor-pointer"
+                    >
+                        +Add New Address
+                    </div>
                 )}
             </Box>
         </Box>
@@ -119,40 +146,54 @@ const UserAddress = ({ files, total, setFiles }) => {
             formData.append('prescription', files[i]);
         }
         formData.append('addressId', userDeliveryAddress._id);
-        dispatch(addNewOrder(formData));
+        dispatch(addNewOrder({
+            formData,
+            continueShopping:()=>{ navigate('/meds')},
+            viewOrder:()=>{ navigate('/user-profile/order')}
+        }));
         setFiles([]);
     };
 
     return (
         <>
-            <>
-                {path !== '/prescription' ? (
-                    <>
-                        <h1 className="text-[1.1rem] font-normal font-default-font-family">
-                            {' '}
-                            Total MRP : ₹
-                            <span className="font-semibold">{total}</span>
-                        </h1>
-                        <div className="sm:w-[35%] w-[100%] lg:w-[100%] flex justify-center items-center">
-                            <button
-                                onClick={handleCartModal}
-                                className="w-[90%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] "
-                            >
-                                Create Order
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="sm:w-[35%] w-[100%] lg:w-[100%] flex flex-col justify-center items-center">
+            {path !== '/prescription' ? (
+                <>
+                    <h1 className="text-[1.1rem] font-normal font-default-font-family">
+                        {' '}
+                        Total MRP : ₹
+                        <span className="font-semibold">{total}</span>
+                    </h1>
+                    <div className="sm:w-[35%] w-[100%] lg:w-[100%] flex justify-center items-center">
                         <button
-                            onClick={handleModal}
-                            className="w-[90%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] "
+                            onClick={handleCart}
+                            className="w-[100%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] "
                         >
                             Create Order
                         </button>
                     </div>
-                )}
+                </>
+            ) : (
+                <div className="sm:w-[35%] w-[100%] lg:w-[100%] flex flex-col justify-center items-center">
+                    <button
+                        onClick={handleModal}
+                        className="w-[100%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] "
+                    >
+                        Create Order
+                    </button>
+                </div>
+            )}
+            {allUserAddress.length < 1 && (
+                <div
+                    className=" text-[#1444ef] mx-auto mt-4 underline"
+                    onClick={() => {
+                        navigate('/user-address');
+                    }}
+                >
+                    Add new address
+                </div>
+            )}
 
+            {allUserAddress.length >= 1 && (
                 <div className=" flex flex-col gap-3  rounded-md">
                     <div className="text-[#000000] border-[0.08rem] rounded-md p-2 text-[0.8rem]">
                         <h1 className=" font-default-font-family text-[1rem] text-black font-medium ">
@@ -188,7 +229,7 @@ const UserAddress = ({ files, total, setFiles }) => {
                         {DrawerList}
                     </Drawer>
                 </div>
-            </>
+            )}
         </>
     );
 };

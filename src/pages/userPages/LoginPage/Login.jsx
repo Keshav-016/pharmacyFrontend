@@ -25,7 +25,7 @@ const Login = () => {
 
     return (
         <>
-            <AuthenticationTemplate SubHeading="Welcome Back!">
+            <AuthenticationTemplate SubHeading="Welcome to medigen!">
                 <div className="flex flex-col gap-4">
                     <GlobalInput
                         inputLabel="Email ID"

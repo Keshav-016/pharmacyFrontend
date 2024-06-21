@@ -36,14 +36,8 @@ const AllMedicinesPage = () => {
         dispatch(searchProductList(searchRef.current.value));
     };
 
-    return medicineDataIsLoading ? (
-        <Loader />
-    ) : medicineDataIsError ? (
-        <ErrorPage />
-    ) : !medicineData.length ? (
-        <NothingToShow />
-    ) : (
-        <div className=" bg-sky-100 flex flex-col min-h-[90vh]">
+    return (
+        <div className=" bg-[#EBF6F9] flex flex-col min-h-[90vh]">
             <div className="overflow-x-scroll no-scrollbar">
                 <div className="px-2 min-w-[760px] max-w-[1200px] mx-auto">
                     <div className="flex w-[100%] justify-between mt-6 mb-3">
@@ -82,35 +76,45 @@ const AllMedicinesPage = () => {
                     {showModel && (
                         <MedicineModal onClose={() => setShowModal(false)} />
                     )}
-
-                    <div className="flex flex-col gap-3 w-[100%] justify-center ">
-                        {medicineData?.length ? (
-                            medicineData.map((item) => {
-                                return (
-                                    <MedicineCard
-                                        page={page}
-                                        id={item._id}
-                                        key={item._id}
-                                        name={item.name}
-                                        price={item.price}
-                                        Manufacturer={item.manufacturer_name}
-                                        PackSizeLabel={item.pack_size_label}
-                                        Composition1={item.short_composition1}
-                                        Composition2={item.short_composition2}
-                                    />
-                                );
-                            })
-                        ) : (
-                            <div className="flex justify-center items-center h-[70vh]">
-                                No such medicine Found
-                            </div>
-                        )}
-                    </div>
+                    {medicineDataIsLoading ? (
+                        <Loader />
+                    ) : medicineDataIsError ? (
+                        <ErrorPage />
+                    ) : !medicineData.length ? (
+                        <NothingToShow />
+                    ) : (
+                        <div className="flex flex-col gap-3 w-[100%] justify-center ">
+                            {medicineData?.length ? (
+                                medicineData.map((item) => {
+                                    return (
+                                        <MedicineCard
+                                            image={item.images[0]}
+                                            page={page}
+                                            id={item._id}
+                                            key={item._id}
+                                            name={item.name}
+                                            price={item.price}
+                                            manufacturer={item.manufacturerName}
+                                            packSizeLabel={item.packSizeLabel}
+                                            compositions={item.compositions}
+                                        />
+                                    );
+                                })
+                            ) : (
+                                <div className="flex justify-center items-center h-[70vh]">
+                                    No such medicine Found
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col gap-5 mx-auto mt-auto">
                 <ReactPagination setPage={setPage} total={total} />
-                <Footer />
+                <div className="mt-4">
+                    {' '}
+                    <Footer />
+                </div>
             </div>
         </div>
     );

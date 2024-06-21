@@ -6,12 +6,10 @@ const NavigateComponent = ({ route, isRouting }) => {
     const [open, isOpen] = useState(false);
 
     const navigateFunction = () => {
-        console.log(2);
         navigate(route);
     };
 
     const setNavigation = () => {
-        console.log(1);
         isOpen(isRouting);
     };
 

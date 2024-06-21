@@ -50,7 +50,6 @@ const Home = () => {
             <div className="bg-[#EBF6F9]">
                 <div className="flex justify-around  h-[90vh] ms-auto sm:max-w-[80%] lg:max-w-[100%] max-w-[100%] mx-auto  ">
                     <div className="flex flex-col justify-between md:mt-15 mt-10 lg:w-[60%] w-[100%] ps-0 sm:ps-10">
-                        {/* <div className=' bg-white w-[400px] h-[400px] absolute rounded-[50%] blur-lg opacity-40 top-100 z-1'></div> */}
                         <div className="px-4 flex flex-col justify-center gap-5 mt-[5%] xl:ps-20 ">
                             <div className=" md:text-[4.5rem] text-[3rem] font-bold font-default-font-family tracking-normal leading-none ps-10 sm:ps-0 ">
                                 Order{' '}

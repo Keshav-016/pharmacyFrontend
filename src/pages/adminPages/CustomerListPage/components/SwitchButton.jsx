@@ -7,7 +7,7 @@ export default function SwitchButton({ userId, checkedStatus }) {
     const [checked, setChecked] = useState(!checkedStatus);
     const handleSwitch = async (e) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             setChecked(e.target.checked);
             const rawData = await axios({
                 method: 'put',
@@ -18,7 +18,6 @@ export default function SwitchButton({ userId, checkedStatus }) {
                 },
                 data: { isBlocked: checked }
             });
-            console.log(rawData);
         } catch (error) {
             console.log(error);
         }

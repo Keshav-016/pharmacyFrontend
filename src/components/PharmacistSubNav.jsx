@@ -17,7 +17,7 @@ function PharmacistSubNav() {
         { name: 'Undelivered', url: '/pharmacist/orders/undelivered' }
     ];
     return (
-        <div className="w-[100%]">
+        <div className="w-[100%] mt-4 mb-5">
             <div className="hidden sm:flex justify-around max-w-[600px] mx-auto gap-5 ">
                 {navItems.map((item, index) => {
                     return (

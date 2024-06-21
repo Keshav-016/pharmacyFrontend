@@ -1,6 +1,6 @@
 import React from 'react';
 import Lottie from 'react-lottie';
-import animation from '../assets/animations/noQuotationsjson.json'
+import animation from '../assets/animations/noQuotationsjson.json';
 
 const NoQuotations = () => {
     const defaultOptions = {
@@ -13,9 +13,9 @@ const NoQuotations = () => {
     };
 
     return (
-            <div className="max-w-[80vh]">
-                <Lottie options={defaultOptions} />
-            </div>
+        <div className="max-w-[80vh] ">
+            <Lottie options={defaultOptions} />
+        </div>
     );
 };
 

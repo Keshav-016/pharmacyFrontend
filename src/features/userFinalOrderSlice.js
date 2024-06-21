@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { notify } from '../App';
+import { userSocket } from '../components/NavbarDefault';
 import Swal from 'sweetalert2';
 
 const baseUrl = `http://localhost:3003`;
@@ -44,7 +45,7 @@ export const showCurrentOrder = createAsyncThunk(
     }
 );
 
-const showOrderConfirmed = () => {
+const showOrderConfirmed = (continueShopping,viewOrder) => {
     Swal.fire({
         html: `<span class="font-default-font-family text-[#737A83] text-[1rem]">${'Your order has been successfully placed'}</span>`,
         icon: `success`,
@@ -56,11 +57,14 @@ const showOrderConfirmed = () => {
     })
         .then(function (confirm) {
             if (confirm.isConfirmed) {
-                let url = location.href;
-                location.href = 'http://localhost:5173/user-profile/order';
+                // let url = location.href;
+                // location.href = 'http://localhost:5173/user-profile/order';
+                viewOrder()
             } else {
-                let url = location.href;
-                location.href = 'http://localhost:5173/meds';
+                // let url = location.href;
+                // location.href = 'http://localhost:5173/meds';
+                continueShopping()
+                
             }
         })
         .catch(function (reason) {
@@ -70,7 +74,7 @@ const showOrderConfirmed = () => {
 
 export const addNewOrder = createAsyncThunk(
     'orders/addNewOrder',
-    async function (formData) {
+    async function ({formData,continueShopping,viewOrder}) {
         try {
             const token = localStorage.getItem('token');
             const rawData = await axios({
@@ -82,7 +86,8 @@ export const addNewOrder = createAsyncThunk(
                 },
                 data: formData
             });
-            showOrderConfirmed();
+            showOrderConfirmed(continueShopping,viewOrder);
+            userSocket.emit('placeOrder', rawData);
             return rawData.data.data;
         } catch (error) {
             notify(error.response.data.message);
@@ -94,12 +99,20 @@ const userOrders = createSlice({
     name: 'orders',
     initialState: {
         data: null,
-        viewingOrder: null
+        viewingOrder: null,
+        totalPendingOrders: 0
     },
     extraReducers: (builder) => {
         builder.addCase(getAllUserOrders.pending, () => {});
         builder.addCase(getAllUserOrders.fulfilled, (state, action) => {
             state.data = action.payload;
+            let countPendingOrders = 0;
+            action.payload.forEach((ele) => {
+                if (ele.status === 'pending') {
+                    countPendingOrders++;
+                }
+            });
+            state.totalPendingOrders = countPendingOrders;
         });
         builder.addCase(getAllUserOrders.rejected, () => {});
 

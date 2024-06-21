@@ -1,4 +1,6 @@
 import React from 'react';
+import { BiSolidRightArrow } from 'react-icons/bi';
+import { BiSolidLeftArrow } from 'react-icons/bi';
 import ReactPaginate from 'react-paginate';
 
 const ReactPagination = ({ setPage, total }) => {
@@ -11,8 +13,8 @@ const ReactPagination = ({ setPage, total }) => {
         <>
             {totalPage > 0 ? (
                 <ReactPaginate
-                    previousLabel={'<'}
-                    nextLabel={'>'}
+                    previousLabel={<BiSolidLeftArrow />}
+                    nextLabel={<BiSolidRightArrow />}
                     breakLabel={'...'}
                     pageCount={totalPage}
                     marginPagesDisplayed={0}

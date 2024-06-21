@@ -5,7 +5,7 @@ import { RxCross2 } from 'react-icons/rx';
 import axios from 'axios';
 import { notify } from '../../../../App';
 import showAlert from '../../../../components/showAlert';
-
+import { price } from '../../../../validators/validatZod';
 const MedicineModal = ({ onClose }) => {
     const modalRef = useRef();
     const closeModal = (e) => {
@@ -20,24 +20,19 @@ const MedicineModal = ({ onClose }) => {
     const manufacturerRef = useRef();
     const compositionRef = useRef();
 
-    const [tags, setTags] = useState([]);
-    const addTags = (e) => {
-        if (tags.length > 1) {
-            notify('Only 2 compositions allowed');
-            e.target.value = '';
-            return;
-        }
-        const tagValue = compositionRef.current.value;
-        if (e.code === 'Enter' && tagValue) {
+    const [compositions, setCompositions] = useState([]);
+    const addCompositions = (e) => {
+        const compositionValue = compositionRef.current.value.trim();
+        if (e.code === 'Enter' && compositionValue) {
             e.preventDefault();
             e.target.value = '';
-            setTags([...tags, tagValue]);
+            setCompositions([...compositions, compositionValue]);
         }
     };
 
     const deleteTag = (val) => {
-        let remainTag = tags.filter((item) => item !== val);
-        setTags(remainTag);
+        let remainComposition = compositions.filter((item) => item !== val);
+        setCompositions(remainComposition);
     };
     const addMedicine = async (e) => {
         try {
@@ -48,12 +43,17 @@ const MedicineModal = ({ onClose }) => {
                 priceRef?.current?.value?.trim() === '' ||
                 packageRef?.current?.value?.trim() === '' ||
                 manufacturerRef?.current?.value?.trim() === '' ||
-                tags[0] === undefined
+                !compositions.length
             ) {
                 notify('Fill all the fields');
                 return;
             }
-            const adminToken = localStorage.getItem('token');
+            const priceCheck = price.safeParse({price:parseInt(priceRef?.current?.value)});
+            if(!priceCheck.success){
+                notify('Price cannot be negative');
+                return;
+            }
+            const adminToken = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'post',
                 url: `http://localhost:3003/medicines/add-medicine`,
@@ -64,11 +64,9 @@ const MedicineModal = ({ onClose }) => {
                 data: {
                     name: medicineName.current.value.trim(),
                     price: priceRef.current.value.trim(),
-                    pack_size_label: packageRef.current.value.trim(),
-                    manufacturer_name: manufacturerRef.current.value.trim(),
-                    short_composition1: tags[0].trim(),
-                    short_composition2:
-                        tags[1] !== undefined ? tags[1].trim() : ''
+                    packSizeLabel: packageRef.current.value.trim(),
+                    manufacturerName: manufacturerRef.current.value.trim(),
+                    compositions: compositions
                 }
             });
             onClose();
@@ -83,7 +81,7 @@ const MedicineModal = ({ onClose }) => {
             <div
                 ref={modalRef}
                 onClick={closeModal}
-                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex "
+                className="fixed inset-0 bg-black bg-opacity-30  backdrop-blur-sm flex z-20 "
             >
                 <div className=" bg-white rounded-2xl m-auto p-7 flex-col gap-5 items-center w-[400px]">
                     <div className="flex justify-between">
@@ -111,14 +109,14 @@ const MedicineModal = ({ onClose }) => {
                                 Price
                             </p>
                             <div className="relative border-[0.1rem] border-[#C0CAD4] rounded-md">
-                                <span className="absolute top-[11.6px] left-4">
+                                <span className="absolute top-[12px] left-2">
                                     ₹
                                 </span>
                                 <input
                                     type="number"
                                     placeholder="210"
                                     ref={priceRef}
-                                    className=" outline-none ms-9 font-default-font-family w-[80%] placeholder-[#ABABB2] placeholder-font-[0.5rem] lg:py-[0.8rem] py-[0.4rem] text-[0.9rem] font-medium"
+                                    className=" outline-none ms-6 font-default-font-family w-[80%] placeholder-[#ABABB2] placeholder-font-[0.5rem] lg:py-[0.8rem] py-[0.4rem] text-[0.9rem] font-medium"
                                 />
                             </div>
                         </div>
@@ -126,7 +124,7 @@ const MedicineModal = ({ onClose }) => {
                         <div>
                             <GlobalInput
                                 inputLabel={'Pack_size_label'}
-                                placeholder={'strip of 10 tablets'}
+                                placeholder={'Strip Of 10 Tablets'}
                                 type={'text'}
                                 refValue={packageRef}
                             />
@@ -144,15 +142,15 @@ const MedicineModal = ({ onClose }) => {
                                 Composition
                             </h3>
                             <div className="flex ">
-                                <div className=" mt-1 text-sm p-1 gap-1 rounded-md w-[100%] border border-[#C0CAD4] flex ">
-                                    {tags?.map((item, index) => {
+                                <div className=" mt-1 text-sm p-1 gap-1 rounded-md w-[100%] border border-[#C0CAD4] flex flex-wrap">
+                                    {compositions?.map((item, index) => {
                                         return (
                                             <div
                                                 className=" 
                                              bg-[#DBE0F1] outline-none border-none rounded-sm px-2 m-1 flex items-center max-w-[130px]"
                                                 key={index}
                                             >
-                                                <div className="max-w-[100px] truncate text-xs  text-[#1444EF]">
+                                                <div className="max-w-[100px] truncate text-[0.94rem] text-[#1444EF]">
                                                     {item}{' '}
                                                 </div>
                                                 <h3
@@ -170,9 +168,9 @@ const MedicineModal = ({ onClose }) => {
                                     <input
                                         className=" outline-none ms-2 font-default-font-family placeholder-[#ABABB2] placeholder-font-[0.5rem] lg:py-[0.7rem] py-[0.4rem] text-[0.9rem] w-[90%] font-medium"
                                         type="text"
-                                        placeholder="Piracetam..."
+                                        placeholder="Paracetamol"
                                         ref={compositionRef}
-                                        onKeyDown={addTags}
+                                        onKeyDown={addCompositions}
                                     />
                                 </div>
                             </div>

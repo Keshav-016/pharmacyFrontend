@@ -14,7 +14,10 @@ const AllOrderPage = () => {
             <CustomerData page={page} />
             <div className="mx-auto mt-auto flex flex-col gap-5 ">
                 <ReactPaginate setPage={setPage} total={total / 10} />
-                <Footer />
+                <div className=" mt-4">
+                    {' '}
+                    <Footer />
+                </div>
             </div>
         </div>
     );

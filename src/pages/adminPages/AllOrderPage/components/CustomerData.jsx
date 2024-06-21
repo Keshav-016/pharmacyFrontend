@@ -26,11 +26,11 @@ const CustomerData = (page) => {
         <Loader />
     ) : customerDataIsError ? (
         <ErrorPage />
-    ) : !customerData.length ? (
+    ) : !customerData?.length ? (
         <NothingToShow />
     ) : (
         <>
-            <div className="overflow-x-scroll no-scrollbar px-3">
+            <div className="px-3 overflow-x-scroll no-scrollbar">
                 <div className=" min-w-[760px] max-w-[1200px] mx-auto rounded-lg pb-1 bg-white">
                     <div className="grid grid-cols-12  ps-5 py-5 text-[0.9rem] bg-white rounded-t-lg text-slate-400">
                         <div className="col-span-3">Order ID</div>
@@ -39,7 +39,7 @@ const CustomerData = (page) => {
                         <div className="col-span-3">Customer Address</div>
                         <div className="col-span-2">Status</div>
                     </div>
-                    <div>
+                    <div className="cursor-pointer max-h-[59vh] overflow-scroll no-scrollbar">
                         {customerData?.map((item) => {
                             return (
                                 <div
@@ -64,7 +64,7 @@ const CustomerData = (page) => {
                                         </div>
                                     )}
                                     <div className="col-span-2 py-2">
-                                        {item?.updatedAt.slice(0, 10)}
+                                        {item?.createdAt.slice(0, 10)}
                                     </div>
 
                                     <div className="col-span-3  py-2 me-10">
@@ -83,7 +83,7 @@ const CustomerData = (page) => {
 
                                     <div className="col-span-2 my-auto text-[0.9rem]">
                                         <button
-                                            className={`py-1 px-2 rounded text-white ${item.status === 'accepted' ? 'bg-yellow-600' : item.status === 'delivered' ? 'bg-green-600' : ' bg-red'}`}
+                                            className={`py-1 px-2 rounded text-white ${item.status === 'confirmed' ? 'bg-yellow-600' : item.status === 'delivered' ? 'bg-green-600' : ' bg-red'}`}
                                         >
                                             {item?.status === 'pending'
                                                 ? 'NEW ORDER'

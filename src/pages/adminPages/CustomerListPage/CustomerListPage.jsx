@@ -36,13 +36,7 @@ const CustomerListPage = () => {
         (state) => state.adminAllCustomer.isLoading
     );
 
-    return allCustomersIsLoading ? (
-        <Loader />
-    ) : allCustomersIsError ? (
-        <ErrorPage />
-    ) : !allCustomers.length ? (
-        <NothingToShow />
-    ) : (
+    return (
         <div className="p-1 md:pt-5 bg-[#EBF6F9] w-[100%] min-h-[90vh] flex flex-col">
             <div className="overflow-x-scroll  no-scrollbar px-3">
                 <div className=" flex justify-between min-w-[760px] max-w-[1200px] mx-auto mb-5">
@@ -75,19 +69,35 @@ const CustomerListPage = () => {
                         </div>
                     </form>
                 </div>
-                <div className="min-w-[760px] max-w-[1200px] mx-auto border rounded-lg bg-white">
-                    <div className="grid grid-cols-6 ps-5  py-2 border-b-[0.03rem] text-[0.9rem] text-slate-400 font-default-font-family">
-                        <div className=" col-span-1">Name</div>
-                        <div className=" col-span-1">Phone No.</div>
-                        <div className=" col-span-3">Address</div>
-                        <div className=" col-span-1 ms-3">Block/Unblock</div>
+
+                {allCustomersIsLoading ? (
+                    <Loader />
+                ) : allCustomersIsError ? (
+                    <ErrorPage />
+                ) : !allCustomers.length ? (
+                    <NothingToShow />
+                ) : (
+                    <div className="min-w-[760px] max-w-[1200px] mx-auto border rounded-lg bg-white">
+                        <div className="grid grid-cols-6 ps-5  py-2 border-b-[0.03rem] text-[0.9rem] text-slate-400 font-default-font-family">
+                            <div className=" col-span-1">Name</div>
+                            <div className=" col-span-1">Phone No.</div>
+                            <div className=" col-span-3">Address</div>
+                            <div className=" col-span-1 ms-7">
+                                Block/Unblock
+                            </div>
+                        </div>
+                        <div className='max-h-[59vh] overflow-scroll no-scrollbar'>
+                            <CustomerData />
+                        </div>
                     </div>
-                    <CustomerData />
-                </div>
+                )}
             </div>
-            <div className="mx-auto mt-auto flex flex-col gap-5">
+            <div className="mx-auto mt-auto  flex flex-col gap-5">
                 <ReactPaginate setPage={setPage} total={total / 10} />
-                <Footer />
+                <div className="mt-4">
+                    {' '}
+                    <Footer />
+                </div>
             </div>
         </div>
     );

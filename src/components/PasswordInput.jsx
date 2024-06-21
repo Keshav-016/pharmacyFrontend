@@ -33,7 +33,7 @@ const PasswordInput = ({
             <div className=" flex border-[0.1rem] border-[#C0CAD4] lg:p-[0.8rem] p-[0.4rem] rounded-md">
                 <input
                     className=" w-full outline-none font-default-font-family placeholder-[#ABABB2] placeholder-font-[0.5rem] text-[0.9rem] font-medium"
-                    maxlength={maxlength}
+                    maxLength={maxlength}
                     defaultValue={value}
                     type={type}
                     placeholder={placeholder}
@@ -41,9 +41,15 @@ const PasswordInput = ({
                     onChange={handleChange}
                 />
                 {eye ? (
-                    <FaRegEye onClick={handleEye} />
+                    <FaRegEye
+                        onClick={handleEye}
+                        style={{ cursor: 'pointer' }}
+                    />
                 ) : (
-                    <FaRegEyeSlash onClick={handleEye} />
+                    <FaRegEyeSlash
+                        onClick={handleEye}
+                        style={{ cursor: 'pointer' }}
+                    />
                 )}
             </div>
         </div>

@@ -8,11 +8,12 @@ export const getAllPharmacistOffer = createAsyncThunk(
     async function (id) {
         try {
             const token =
+            localStorage.getItem('adminToken') ||
                 localStorage.getItem('token') ||
-                sessionStorage.getItem('token');
+                sessionStorage.getItem('token') ;
             const rawData = await axios({
                 method: 'get',
-                url: `${baseUrl}/quotation/get-offers-user?orderId=${id}`,
+                url: `${baseUrl}/quotation/get-offers?orderId=${id}`,
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`

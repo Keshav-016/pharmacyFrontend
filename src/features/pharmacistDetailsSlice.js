@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { notify } from '../App';
 import showAlert from '../components/showAlert';
+import { pharmaSocket } from '../components/PharmacistNav';
 const baseUrl = 'http://localhost:3003';
 
 export const loginPharmacist = createAsyncThunk(
@@ -99,9 +100,9 @@ export const updatePharmacistPassword = createAsyncThunk(
     }
 );
 
-export const sendOtp = createAsyncThunk(
+export const sendPasswordLink = createAsyncThunk(
     'pharmacist/sendOtp',
-    async function ({ email, setShowOtp }, { rejectWithValue }) {
+    async function ({ email}, { rejectWithValue }) {
         try {
             const rawData = await axios({
                 method: 'POST',
@@ -111,30 +112,10 @@ export const sendOtp = createAsyncThunk(
                     'Content-Type': 'application/json'
                 }
             });
-            setShowOtp(true);
             return rawData;
         } catch (error) {
+            console.log(error)
             return Promise.reject('error');
-        }
-    }
-);
-
-export const verifyOtp = createAsyncThunk(
-    'pharmacist/verifyOtp',
-    async function ({ email, otp, setChangePassword }, { rejectWithValue }) {
-        try {
-            const rawData = await axios({
-                method: 'POST',
-                url: `${baseUrl}/pharmacist/verify-otp`,
-                data: { email, otp },
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            setChangePassword(true);
-            return rawData;
-        } catch (error) {
-            return rejectWithValue(error.response.data.message);
         }
     }
 );
@@ -172,6 +153,9 @@ const pharmacistSlice = createSlice({
     reducers: {
         logOut(state, action) {
             state.data = null;
+            pharmaSocket.on('disconnected', () => {
+                pharmaSocket.emit('DelPharmacist', token);
+            });
             localStorage.removeItem('token');
             sessionStorage.removeItem('token');
             action.payload.redirect();
@@ -231,10 +215,10 @@ const pharmacistSlice = createSlice({
             state.isError = false;
         });
         builder.addCase(updatePharmacistDetails.fulfilled, (state, action) => {
-            state.data = action.payload.data.data;
+            state.data = action.payload?.data?.data;
             state.isLoading = false;
             state.isError = false;
-            showAlert('success', 'Profile Updated successfully');
+            notify('Profile Updated successfully', 'success');
         });
         builder.addCase(updatePharmacistDetails.rejected, (state) => {
             state.isLoading = false;
@@ -257,36 +241,22 @@ const pharmacistSlice = createSlice({
             state.isError = true;
             notify(action.error.message);
         });
-
-        builder.addCase(sendOtp.pending, (state) => {
+        builder.addCase(sendPasswordLink.pending, (state) => {
             state.isLoading = true;
             state.isError = false;
         });
-        builder.addCase(sendOtp.fulfilled, (state) => {
+        builder.addCase(sendPasswordLink.fulfilled, (state) => {
             state.isLoading = false;
             state.isError = false;
-            notify('Otp Sent Successfully', 'success');
+            notify('mail Sent Successfully', 'success');
         });
-        builder.addCase(sendOtp.rejected, (state) => {
+        builder.addCase(sendPasswordLink.rejected, (state) => {
             state.isLoading = false;
             state.isError = true;
             notify('Failed to send otp');
         });
 
-        builder.addCase(verifyOtp.pending, (state) => {
-            state.isLoading = true;
-            state.isError = false;
-        });
-        builder.addCase(verifyOtp.fulfilled, (state) => {
-            state.isLoading = false;
-            state.isError = false;
-            notify('Otp verification Successful', 'success');
-        });
-        builder.addCase(verifyOtp.rejected, (state) => {
-            state.isLoading = false;
-            state.isError = true;
-            notify('Otp verification failed');
-        });
+
     }
 });
 

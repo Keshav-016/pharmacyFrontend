@@ -1,9 +1,8 @@
 import React, { useRef } from 'react';
 import AuthenticationTemplate from '../../../components/AuthenticationTemplate';
 import GlobalInput from '../../../components/GlobalInput';
-import Button from '../../../components/Button';
 import PasswordInput from '../../../components/PasswordInput';
-import { ToastContainer, toast } from 'react-toastify';
+import { notify } from '../../../App';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -16,8 +15,6 @@ const LoginPage = () => {
     function emailIsValid(email) {
         return /\S+@\S+\.\S+/.test(email);
     }
-
-    const notify = (msg) => toast(msg);
 
     const authenticateAdmin = async (email, password) => {
         try {
@@ -33,14 +30,17 @@ const LoginPage = () => {
                 }
             });
             navigate('/admin/customer-list');
-            localStorage.setItem('token', rawData.data.data.token);
+            localStorage.setItem('adminToken', rawData.data.data.token);
         } catch (err) {
             notify(err.response.data.message);
         }
     };
 
     const submitLogIn = async (e) => {
-        if (emailIsValid(emailRef.current.value)) {
+        if(emailRef.current.value==='' || passRef.current.value===''){
+            notify("Plese fill all the fields")
+        }
+        else if (emailIsValid(emailRef.current.value)) {
             authenticateAdmin(emailRef.current.value, passRef.current.value);
         } else {
             notify('Invalid email');
@@ -68,9 +68,8 @@ const LoginPage = () => {
                     type="button"
                     value={'Sign In'}
                     onClick={submitLogIn}
-                    className="w-[100%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] "
+                    className="w-[100%] bg-[#1444EF] border border-[#1444EF] text-white lg:p-3 p-[0.4rem] font-default-font-family hover:bg-transparent hover:text-[#1444EF] lg:rounded-md rounded-sm lg:text-normal text-[0.8rem] hover:cursor-pointer "
                 />
-                <ToastContainer />
             </AuthenticationTemplate>
         </>
     );

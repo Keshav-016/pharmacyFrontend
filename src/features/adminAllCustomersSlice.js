@@ -6,7 +6,7 @@ export const fetchAllCustomerList = createAsyncThunk(
     'adminAllCustomer/fetchAllCustomerList',
     async function (page) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: `http://localhost:3003/customers/get-all?page=${page}`,
@@ -27,7 +27,7 @@ export const searchedCustomer = createAsyncThunk(
     'adminAllCustomer/searchedCustomer',
     async function (data) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'get',
                 url: `http://localhost:3003/customers/search?name=${data}`,
@@ -48,7 +48,7 @@ export const deleteFromCustomerList = createAsyncThunk(
     'adminAllCustomer/deleteFromCustomerList',
     async function (id) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'delete',
                 url: `http://localhost:3003/customers/delete?id=${id}`,
@@ -69,7 +69,7 @@ export const blockUser = createAsyncThunk(
     'adminAllCustomer/blockUser',
     async function ({ userId, checked }) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('adminToken');
             const rawData = await axios({
                 method: 'put',
                 url: `http://localhost:3003/customers/update?id=${userId}`,
@@ -130,9 +130,9 @@ const adminAllCustomerDetails = createSlice({
 
         builder.addCase(blockUser.pending, () => {});
         builder.addCase(blockUser.fulfilled, (state, action) => {
-            const isBlocked = action.payload.data.data.isBlocked;
+            const isBlocked = action?.payload?.data?.data?.isBlocked;
             state?.data?.forEach((item, ind) => {
-                if (item?._id === action.payload.data.data._id) {
+                if (item?._id === action?.payload?.data?.data._id) {
                     state.data[ind].isBlocked = isBlocked;
                 }
             });

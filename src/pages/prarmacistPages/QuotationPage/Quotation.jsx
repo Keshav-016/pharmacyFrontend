@@ -10,13 +10,12 @@ import NothingToShow from '../../../components/NothingToShow.jsx';
 const Quotation = () => {
     const [order, setOrder] = useState(null);
     const quotations = useSelector((state) => state.quotations);
-
     return quotations?.isLoading ? (
         <Loader />
     ) : quotations?.error ? (
         <ErrorPage />
     ) : !quotations?.data?.length ? (
-        <NothingToShow />
+        <div className=' min-h-[68vh]'><NothingToShow /></div>
     ) : (
         <div className=" min-h-[90vh] bg-[#EBF6F9]">
             <div className="grid grid-cols-12 gap-[20px] px-2 max-w-[1200px] m-auto">

@@ -13,7 +13,7 @@ const Loader = () => {
     };
 
     return (
-        <div className=" h-[90vh] bg-[#EBF6F9] flex justify-center items-center">
+        <div className="  bg-[#EBF6F9] flex justify-center items-center min-h-[90vh]">
             <div className="max-w-[50vh]">
                 <Lottie options={defaultOptions} />
             </div>
